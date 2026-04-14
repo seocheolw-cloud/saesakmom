@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==========================================
+// 인증 (NextAuth)
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  nickname      String    @unique
+  profileImage  String?
+  role          Role      @default(USER)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+  reports  Report[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ==========================================
+// 커뮤니티
+// ==========================================
+
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String?
+  sortOrder   Int    @default(0)
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model Post {
+  id         String     @id @default(cuid())
+  title      String
+  content    String     @db.Text
+  images     String[]
+  viewCount  Int        @default(0)
+  likeCount  Int        @default(0)
+  status     PostStatus @default(ACTIVE)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  authorId   String
+  categoryId String
+
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  comments Comment[]
+  likes    Like[]
+  tags     PostTag[]
+  reports  Report[]
+
+  @@index([categoryId, createdAt(sort: Desc)])
+  @@index([likeCount(sort: Desc)])
+  @@map("posts")
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String        @db.Text
+  status    CommentStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  authorId String
+  postId   String
+  parentId String?
+
+  author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+  reports Report[]
+
+  @@index([postId, createdAt])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  postId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model Report {
+  id        String       @id @default(cuid())
+  reason    String
+  detail    String?      @db.Text
+  status    ReportStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  resolvedAt DateTime?
+
+  reporterId String
+  postId     String?
+  commentId  String?
+
+  reporter User     @relation(fields: [reporterId], references: [id])
+  post     Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment  Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// ==========================================
+// 육아용품 비교
+// ==========================================
+
+model Product {
+  id            String        @id @default(cuid())
+  name          String
+  brand         String
+  categorySlug  String
+  priceMin      Int?
+  priceMax      Int?
+  releaseDate   String?
+  imageUrl      String?
+  ageRangeStart Int?
+  ageRangeEnd   Int?
+  origin        String?
+  status        ProductStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  specs          ProductSpec[]
+  certifications ProductCertification[]
+  reviews        ProductReviewSummary?
+  scores         ProductScore?
+
+  @@index([categorySlug, status])
+  @@map("products")
+}
+
+model ProductSpec {
+  id        String @id @default(cuid())
+  key       String
+  value     String
+  sortOrder Int    @default(0)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, key])
+  @@map("product_specs")
+}
+
+model ProductCertification {
+  id     String  @id @default(cuid())
+  type   String
+  name   String
+  number String?
+  note   String?
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_certifications")
+}
+
+model ProductReviewSummary {
+  id              String   @id @default(cuid())
+  totalReviews    Int      @default(0)
+  avgRating       Float    @default(0)
+  prosKeywords    String[]
+  consKeywords    String[]
+  prosReviews     String[]
+  consReviews     String[]
+  recommendFor    String?  @db.Text
+  notRecommendFor String?  @db.Text
+  sources         String[]
+  analyzedAt      DateTime @default(now())
+
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_review_summaries")
+}
+
+model ProductScore {
+  id               String @id @default(cuid())
+  valueScore       Float  @default(0)
+  popularityScore  Float  @default(0)
+  overallScore     Float  @default(0)
+  similarProducts  String[]
+
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_scores")
+}
+
+// ==========================================
+// 광고 (비활성 상태로 준비)
+// ==========================================
+
+model AdSlot {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  position  String
+  isActive  Boolean      @default(false)
+  imageUrl  String?
+  linkUrl   String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("ad_slots")
+}
+
+// ==========================================
+// Enums
+// ==========================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  WARNED
+  SUSPENDED
+  BANNED
+}
+
+enum PostStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum CommentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
