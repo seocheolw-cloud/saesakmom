@@ -216,9 +216,9 @@ export default async function Home() {
           </div>
 
           {/* 우측: 사이드바 */}
-          <aside className="hidden lg:block w-[280px] shrink-0 space-y-6">
-            {/* 실시간 인기 검색어 */}
-            <div className="bg-white rounded-xl border border-[#d4d4d4] p-5 sticky top-[88px]">
+          <aside className="hidden lg:block w-[280px] shrink-0">
+            {/* 실시간 인기 검색어 — 인기글 박스와 높이 맞춤 */}
+            <div className="bg-white rounded-xl border border-[#d4d4d4] p-5 sticky top-[88px] mt-[36px]">
               <h2 className="text-sm font-bold text-foreground mb-4">실시간 인기 검색어</h2>
               <ol className="space-y-2">
                 {TRENDING_KEYWORDS.map((keyword, i) => (

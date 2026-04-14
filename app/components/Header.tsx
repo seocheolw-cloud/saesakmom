@@ -48,10 +48,10 @@ export async function Header() {
           </div>
           {session?.user ? (
             <div className="flex items-center gap-2">
-              <NotificationBell unreadCount={unreadCount} />
               <span className="text-sm font-semibold text-foreground">
                 {session.user.nickname}님
               </span>
+              <NotificationBell unreadCount={unreadCount} />
               <Link
                 href="/mypage"
                 className="h-10 px-4 rounded-lg border border-[#d4d4d4] text-sm font-semibold text-[#5F6B7C] hover:bg-gray-50 transition-colors inline-flex items-center"
