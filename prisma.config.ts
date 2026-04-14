@@ -6,7 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local") });
 
 export default defineConfig({
   datasource: {
-    url: process.env.DATABASE_URL!,
+    url: process.env.DIRECT_URL!,
     shadowDatabaseUrl: process.env.DIRECT_URL!,
   },
   schema: "./prisma/schema.prisma",
