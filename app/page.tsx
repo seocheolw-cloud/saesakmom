@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { LogoutButton } from "@/app/components/AuthButton";
 
 const CATEGORIES = [
   { name: "임신", slug: "pregnancy" },
@@ -139,7 +141,8 @@ function PostCard({ post }: { post: typeof POPULAR_POSTS[number] }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
       {/* 헤더 */}
@@ -171,7 +174,7 @@ export default function Home() {
             ))}
           </nav>
 
-          {/* 우측: 검색 + 로그인 */}
+          {/* 우측: 검색 + 로그인/유저 */}
           <div className="flex items-center gap-3 ml-auto">
             <div className="hidden md:block relative">
               <input
@@ -183,12 +186,27 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <Link
-              href="/login"
-              className="h-10 px-5 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary-hover transition-colors inline-flex items-center"
-            >
-              로그인
-            </Link>
+            {session?.user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-foreground">
+                  {session.user.nickname}님
+                </span>
+                <Link
+                  href="/mypage"
+                  className="h-10 px-4 rounded-lg border border-[#d4d4d4] text-sm font-semibold text-[#5F6B7C] hover:bg-gray-50 transition-colors inline-flex items-center"
+                >
+                  마이페이지
+                </Link>
+                <LogoutButton />
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="h-10 px-5 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary-hover transition-colors inline-flex items-center"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         </div>
       </header>
