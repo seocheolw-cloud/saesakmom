@@ -11,6 +11,7 @@ export default async function NewPostPage() {
   }
 
   const categories = await prisma.category.findMany({
+    where: { slug: { not: "popular" } },
     orderBy: { sortOrder: "asc" },
   });
 

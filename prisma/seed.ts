@@ -11,19 +11,27 @@ const prisma = new PrismaClient({
 });
 
 const categories = [
-  { name: "임신", slug: "pregnancy", sortOrder: 1 },
-  { name: "출산", slug: "birth", sortOrder: 2 },
-  { name: "육아일상", slug: "daily", sortOrder: 3 },
-  { name: "수유/이유식", slug: "feeding", sortOrder: 4 },
-  { name: "건강", slug: "health", sortOrder: 5 },
-  { name: "자유게시판", slug: "free", sortOrder: 6 },
+  { name: "인기글", slug: "popular", sortOrder: 1 },
+  { name: "임신", slug: "pregnancy", sortOrder: 2 },
+  { name: "출산", slug: "birth", sortOrder: 3 },
+  { name: "산후조리", slug: "postpartum", sortOrder: 4 },
+  { name: "육아", slug: "parenting", sortOrder: 5 },
+  { name: "수유/이유식", slug: "feeding", sortOrder: 6 },
+  { name: "뷰티/다이어트", slug: "beauty", sortOrder: 7 },
+  { name: "자유게시판", slug: "free", sortOrder: 8 },
 ];
 
 async function main() {
+  // 기존 카테고리 중 새 목록에 없는 것 삭제
+  const oldSlugs = ["daily", "health"];
+  for (const slug of oldSlugs) {
+    await prisma.category.deleteMany({ where: { slug } });
+  }
+
   for (const category of categories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
-      update: {},
+      update: { name: category.name, sortOrder: category.sortOrder },
       create: category,
     });
   }

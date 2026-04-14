@@ -32,6 +32,7 @@ export default async function EditPostPage({
   }
 
   const categories = await prisma.category.findMany({
+    where: { slug: { not: "popular" } },
     orderBy: { sortOrder: "asc" },
   });
 

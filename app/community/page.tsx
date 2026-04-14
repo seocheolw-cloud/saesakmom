@@ -8,16 +8,20 @@ const POSTS_PER_PAGE = 10;
 export default async function CommunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; page?: string; sort?: string }>;
 }) {
   const params = await searchParams;
   const categorySlug = params.category;
+  const sort = params.sort;
   const currentPage = Math.max(1, Number(params.page) || 1);
   const session = await auth();
 
   const categories = await prisma.category.findMany({
+    where: { slug: { not: "popular" } },
     orderBy: { sortOrder: "asc" },
   });
+
+  const isPopular = sort === "popular";
 
   const where = {
     status: "ACTIVE" as const,
@@ -34,7 +38,7 @@ export default async function CommunityPage({
         category: { select: { name: true, slug: true } },
         _count: { select: { comments: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: isPopular ? { likeCount: "desc" } : { createdAt: "desc" },
       skip: (currentPage - 1) * POSTS_PER_PAGE,
       take: POSTS_PER_PAGE,
     }),
@@ -43,20 +47,33 @@ export default async function CommunityPage({
 
   const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
 
+  const isAll = !categorySlug && !isPopular;
+
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
       <Header />
       <main className="max-w-[800px] mx-auto px-4 py-6">
+        {/* 카테고리 탭 */}
         <div className="flex gap-1 overflow-x-auto mb-4 bg-white rounded-xl border border-[#d4d4d4] p-1">
           <Link
             href="/community"
             className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center transition-colors ${
-              !categorySlug
+              isAll
                 ? "bg-primary text-white"
                 : "text-[#5F6B7C] hover:bg-gray-50"
             }`}
           >
             전체
+          </Link>
+          <Link
+            href="/community?sort=popular"
+            className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center transition-colors ${
+              isPopular
+                ? "bg-primary text-white"
+                : "text-[#5F6B7C] hover:bg-gray-50"
+            }`}
+          >
+            인기글
           </Link>
           {categories.map((cat) => (
             <Link
@@ -73,6 +90,7 @@ export default async function CommunityPage({
           ))}
         </div>
 
+        {/* 글쓰기 버튼 */}
         {session?.user && (
           <div className="flex justify-end mb-4">
             <Link
@@ -84,6 +102,7 @@ export default async function CommunityPage({
           </div>
         )}
 
+        {/* 게시글 목록 */}
         <div className="bg-white rounded-xl border border-[#d4d4d4] overflow-hidden">
           {posts.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted">
@@ -125,21 +144,30 @@ export default async function CommunityPage({
           )}
         </div>
 
+        {/* 페이지네이션 */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-1 mt-6">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Link
-                key={page}
-                href={`/community?${categorySlug ? `category=${categorySlug}&` : ""}page=${page}`}
-                className={`w-9 h-9 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-colors ${
-                  page === currentPage
-                    ? "bg-primary text-white"
-                    : "text-[#5F6B7C] hover:bg-gray-50 border border-[#d4d4d4]"
-                }`}
-              >
-                {page}
-              </Link>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              const queryParts: string[] = [];
+              if (categorySlug) queryParts.push(`category=${categorySlug}`);
+              if (isPopular) queryParts.push("sort=popular");
+              queryParts.push(`page=${page}`);
+              const href = `/community?${queryParts.join("&")}`;
+
+              return (
+                <Link
+                  key={page}
+                  href={href}
+                  className={`w-9 h-9 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-colors ${
+                    page === currentPage
+                      ? "bg-primary text-white"
+                      : "text-[#5F6B7C] hover:bg-gray-50 border border-[#d4d4d4]"
+                  }`}
+                >
+                  {page}
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>

@@ -11,7 +11,8 @@
       "Bash(npx tsc:*)",
       "Bash(git commit:*)",
       "Bash(taskkill /PID 19640 /F)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }
