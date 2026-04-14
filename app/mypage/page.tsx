@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { NicknameForm } from "./NicknameForm";
 import { TabContent } from "./TabContent";
+import { Header } from "@/app/components/Header";
 
 export default async function MyPage() {
   const session = await auth();
@@ -33,34 +33,7 @@ export default async function MyPage() {
 
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#d4d4d4]">
-        <div className="max-w-[1100px] mx-auto flex items-center h-[52px] md:h-16 px-4">
-          <Link href="/" className="text-xl font-bold text-primary shrink-0">
-            새싹맘
-          </Link>
-          <nav className="flex items-center ml-6 md:ml-10 gap-1 md:gap-2 h-full">
-            {[
-              { name: "홈", href: "/" },
-              { name: "커뮤니티", href: "/community" },
-              { name: "육아용품", href: "/products" },
-            ].map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="h-full px-3 md:px-4 text-sm md:text-[16px] font-semibold inline-flex items-center text-[#5F6B7C] hover:text-[#18202A] transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-3 ml-auto">
-            <span className="text-sm font-semibold text-foreground">
-              {user.nickname}님
-            </span>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* 메인 */}
       <main className="max-w-[800px] mx-auto px-4 py-8">
