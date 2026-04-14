@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cacheLife, cacheTag } from "next/cache";
 import { Header } from "@/app/components/Header";
 import { prisma } from "@/lib/prisma";
 
@@ -30,16 +29,10 @@ type PostSummary = {
 // Cached data-fetching helpers
 // ---------------------------------------------------------------------------
 async function getCategories() {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("categories");
   return prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
 }
 
 async function getPopularPosts(): Promise<PostSummary[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("posts", "popular-posts");
   return prisma.post.findMany({
     where: { status: "ACTIVE" },
     include: {
@@ -53,9 +46,6 @@ async function getPopularPosts(): Promise<PostSummary[]> {
 }
 
 async function getRecentPosts(): Promise<PostSummary[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("posts", "recent-posts");
   return prisma.post.findMany({
     where: { status: "ACTIVE" },
     include: {
@@ -71,10 +61,6 @@ async function getRecentPosts(): Promise<PostSummary[]> {
 async function getCategoryPosts(
   categories: { name: string; slug: string }[]
 ): Promise<Record<string, { id: string; title: string; commentCount: number }[]>> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("posts", "category-posts");
-
   const result: Record<string, { id: string; title: string; commentCount: number }[]> = {};
   for (const cat of categories) {
     const posts = await prisma.post.findMany({
