@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Header } from "@/app/components/Header";
 import { DeleteButton } from "./DeleteButton";
+import { LikeButton } from "./LikeButton";
+import { CommentSection } from "./CommentSection";
 
 export default async function PostDetailPage({
   params,
@@ -26,9 +28,31 @@ export default async function PostDetailPage({
     notFound();
   }
 
+  // 조회수 증가
   await prisma.post.update({
     where: { id },
     data: { viewCount: { increment: 1 } },
+  });
+
+  // 좋아요 여부
+  const liked = session?.user
+    ? !!(await prisma.like.findUnique({
+        where: { userId_postId: { userId: session.user.id, postId: id } },
+      }))
+    : false;
+
+  // 댓글 (대댓글 포함)
+  const comments = await prisma.comment.findMany({
+    where: { postId: id, status: "ACTIVE", parentId: null },
+    include: {
+      author: { select: { id: true, nickname: true } },
+      replies: {
+        where: { status: "ACTIVE" },
+        include: { author: { select: { id: true, nickname: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { createdAt: "asc" },
   });
 
   const isAuthor = session?.user?.id === post.author.id;
@@ -38,6 +62,7 @@ export default async function PostDetailPage({
       <Header />
       <main className="max-w-[800px] mx-auto px-4 py-8">
         <article className="bg-white rounded-xl border border-[#d4d4d4] overflow-hidden">
+          {/* 헤더 */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-semibold text-primary bg-blue-50 px-2 py-0.5 rounded">
@@ -48,9 +73,12 @@ export default async function PostDetailPage({
               {post.title}
             </h1>
             <div className="flex items-center gap-3 text-sm text-muted">
-              <span className="font-medium text-foreground">
+              <Link
+                href={`/user/${post.author.id}`}
+                className="font-medium text-foreground hover:text-primary transition-colors"
+              >
                 {post.author.nickname}
-              </span>
+              </Link>
               <span>
                 {post.createdAt.toLocaleDateString("ko-KR", {
                   year: "numeric",
@@ -61,27 +89,40 @@ export default async function PostDetailPage({
                 })}
               </span>
               <span>조회 {post.viewCount + 1}</span>
-              <span>좋아요 {post.likeCount}</span>
-              <span>댓글 {post._count.comments}</span>
             </div>
           </div>
+
+          {/* 본문 */}
           <div className="p-6">
             <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
               {post.content}
             </div>
           </div>
-          {isAuthor && (
-            <div className="px-6 pb-6 flex justify-end gap-2">
-              <Link
-                href={`/community/${post.id}/edit`}
-                className="h-9 px-4 rounded-lg border border-[#d4d4d4] text-xs font-semibold text-[#5F6B7C] hover:bg-gray-50 transition-colors inline-flex items-center"
-              >
-                수정
-              </Link>
-              <DeleteButton postId={post.id} />
-            </div>
-          )}
+
+          {/* 좋아요 + 작성자 액션 */}
+          <div className="px-6 pb-6 flex items-center justify-between">
+            <LikeButton postId={post.id} liked={liked} likeCount={post.likeCount} />
+            {isAuthor && (
+              <div className="flex gap-2">
+                <Link
+                  href={`/community/${post.id}/edit`}
+                  className="h-9 px-4 rounded-lg border border-[#d4d4d4] text-xs font-semibold text-[#5F6B7C] hover:bg-gray-50 transition-colors inline-flex items-center"
+                >
+                  수정
+                </Link>
+                <DeleteButton postId={post.id} />
+              </div>
+            )}
+          </div>
         </article>
+
+        {/* 댓글 */}
+        <CommentSection
+          postId={post.id}
+          comments={comments}
+          currentUserId={session?.user?.id}
+        />
+
         <div className="mt-4">
           <Link
             href="/community"
