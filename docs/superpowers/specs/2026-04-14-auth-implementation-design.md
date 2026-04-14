@@ -72,29 +72,36 @@ app/(auth)/
 | email | string | 이메일 형식 | "유효한 이메일을 입력하세요" |
 | password | string | 1자 이상 | "비밀번호를 입력하세요" |
 
-## UI 스타일 (블라인드 참고)
+## UI 스타일 (블라인드 참고, 하늘색 테마)
 
 ### 색상
 
 | 용도 | 색상 코드 |
 |------|----------|
-| 주요 (버튼, focus) | `#22C55E` (green-500) |
-| 주요 hover | `#16A34A` (green-600) |
-| 배경 | `#f6f7fa` |
+| 주요 (버튼, focus) | `#3b9dff` |
+| 주요 hover | `#2b8ae6` |
+| 배경 | `#f0f4f8` |
 | 카드 배경 | `#ffffff` |
 | 텍스트 | `#222222` |
 | 보조 텍스트 | `#94969b` |
 | 경계선 | `#d4d4d4` |
 | 에러 | `#FB5957` |
 | 카카오 (비활성) | `#FEE500` |
+| 네비 활성 텍스트 | `#18202A` |
+| 네비 비활성 텍스트 | `#5F6B7C` |
+
+### 전체 레이아웃
+
+- **헤더**: 로고 + 홈/커뮤니티/육아용품 3탭 + 검색바 + 로그인 버튼
+- **홈**: 인기글, 최신글, 카테고리별 글, 사이드바(인기 검색어)
+- **브레이크포인트**: 1100px (모바일/데스크톱)
 
 ### 컴포넌트 스타일
 
-- **입력 필드**: border `#d4d4d4`, border-radius 8px, height 44px, font-size 14px, focus 시 border `#22C55E`
+- **입력 필드**: border `#d4d4d4`, border-radius 8px, height 44px, font-size 14px, focus 시 border `#3b9dff`
 - **버튼**: height 44px, border-radius 8px, font-weight 600, font-size 14px
-- **카드**: max-width 400px, 중앙 정렬, padding 32px, border-radius 12px, shadow-sm
+- **인증 카드**: max-width 400px, 중앙 정렬, padding 32px, border-radius 12px, shadow-md
 - **에러 메시지**: font-size 12px, color `#FB5957`, margin-top 4px
-- **브레이크포인트**: 1100px (모바일/데스크톱)
 - **폰트**: Pretendard (시스템 기본 sans-serif 폴백)
 
 ## 에러 처리
