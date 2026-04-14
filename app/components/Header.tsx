@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { LogoutButton } from "@/app/components/AuthButton";
+import { NotificationBell } from "@/app/components/NotificationBell";
 
 export async function Header() {
   const session = await auth();
+
+  let unreadCount = 0;
+  if (session?.user) {
+    unreadCount = await prisma.notification.count({
+      where: { userId: session.user.id, isRead: false },
+    });
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#d4d4d4]">
@@ -38,7 +47,8 @@ export async function Header() {
             </svg>
           </div>
           {session?.user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <NotificationBell unreadCount={unreadCount} />
               <span className="text-sm font-semibold text-foreground">
                 {session.user.nickname}님
               </span>

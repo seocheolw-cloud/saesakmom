@@ -26,6 +26,21 @@ export async function toggleLike(postId: string): Promise<void> {
       where: { id: postId },
       data: { likeCount: { increment: 1 } },
     });
+
+    // 좋아요 알림
+    const { createNotification } = await import("./notification");
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true, title: true },
+    });
+    if (post) {
+      await createNotification({
+        userId: post.authorId,
+        type: "LIKE",
+        message: `${session.user.nickname}님이 "${post.title}" 글을 좋아합니다`,
+        postId,
+      });
+    }
   }
 
   revalidatePath(`/community/${postId}`);

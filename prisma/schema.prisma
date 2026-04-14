@@ -22,12 +22,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  posts    Post[]
-  comments Comment[]
-  likes    Like[]
-  reports  Report[]
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  reports       Report[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -116,10 +117,11 @@ model Post {
   author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id])
 
-  comments Comment[]
-  likes    Like[]
-  tags     PostTag[]
-  reports  Report[]
+  comments      Comment[]
+  likes         Like[]
+  tags          PostTag[]
+  reports       Report[]
+  notifications Notification[]
 
   @@index([categoryId, createdAt(sort: Desc)])
   @@index([likeCount(sort: Desc)])
@@ -151,8 +153,9 @@ model Comment {
   author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies Comment[] @relation("CommentReplies")
-  reports Report[]
+  replies       Comment[]      @relation("CommentReplies")
+  reports       Report[]
+  notifications Notification[]
 
   @@index([postId, createdAt])
   @@map("comments")
@@ -276,6 +279,35 @@ model ProductScore {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("product_scores")
+}
+
+// ==========================================
+// 알림
+// ==========================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId    String
+  postId    String?
+  commentId String?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
 }
 
 // ==========================================
