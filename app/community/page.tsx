@@ -54,23 +54,23 @@ export default async function CommunityPage({
       <Header />
       <main className="max-w-[800px] mx-auto px-4 py-6">
         {/* 카테고리 탭 */}
-        <div className="flex gap-1 overflow-x-auto mb-4 bg-white rounded-xl border border-[#d4d4d4] p-1">
+        <div className="flex flex-wrap gap-2 mb-5">
           <Link
             href="/community"
-            className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center transition-colors ${
+            className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
               isAll
-                ? "bg-primary text-white"
-                : "text-[#5F6B7C] hover:bg-gray-50"
+                ? "bg-foreground text-white"
+                : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
             }`}
           >
             전체
           </Link>
           <Link
             href="/community?sort=popular"
-            className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center transition-colors ${
+            className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
               isPopular
-                ? "bg-primary text-white"
-                : "text-[#5F6B7C] hover:bg-gray-50"
+                ? "bg-foreground text-white"
+                : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
             }`}
           >
             인기글
@@ -79,10 +79,10 @@ export default async function CommunityPage({
             <Link
               key={cat.slug}
               href={`/community?category=${cat.slug}`}
-              className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center transition-colors ${
+              className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
                 categorySlug === cat.slug
-                  ? "bg-primary text-white"
-                  : "text-[#5F6B7C] hover:bg-gray-50"
+                  ? "bg-foreground text-white"
+                  : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
               }`}
             >
               {cat.name}
