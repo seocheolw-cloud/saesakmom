@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Header } from "@/app/components/Header";
 
-const POSTS_PER_PAGE = 10;
+const POSTS_PER_PAGE = 20;
 
 export default async function CommunityPage({
   searchParams,
