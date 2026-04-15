@@ -12,7 +12,13 @@
       "Bash(git commit:*)",
       "Bash(taskkill /PID 19640 /F)",
       "Bash(taskkill:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(git push:*)",
+      "Bash(xargs grep:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Read(//tmp/**)",
+      "Bash(tee /tmp/baseline.sql)"
     ]
   }
 }

@@ -33,15 +33,23 @@ async function getCategories() {
 }
 
 async function getPopularPosts(): Promise<PostSummary[]> {
+  const POPULAR_THRESHOLD = 20;
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "posts"
+    WHERE status = 'ACTIVE'
+      AND "likeCount" - "dislikeCount" >= ${POPULAR_THRESHOLD}
+    ORDER BY "createdAt" DESC
+    LIMIT 3
+  `;
+  if (rows.length === 0) return [];
   return prisma.post.findMany({
-    where: { status: "ACTIVE" },
+    where: { id: { in: rows.map((r) => r.id) } },
     include: {
       author: { select: { nickname: true } },
       category: { select: { name: true } },
       _count: { select: { comments: true } },
     },
-    orderBy: { likeCount: "desc" },
-    take: 3,
+    orderBy: { createdAt: "desc" },
   });
 }
 

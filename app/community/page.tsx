@@ -49,8 +49,22 @@ export default async function CommunityPage({
     }
   }
 
+  const POPULAR_THRESHOLD = 20;
+
+  // 인기글: likeCount - dislikeCount >= 20 (Prisma에서 계산 필드 필터 불가 → raw SQL로 ID 조회)
+  let popularIds: string[] | null = null;
+  if (isPopular) {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "posts"
+      WHERE status = 'ACTIVE'
+        AND "likeCount" - "dislikeCount" >= ${POPULAR_THRESHOLD}
+    `;
+    popularIds = rows.map((r) => r.id);
+  }
+
   const where = {
     status: "ACTIVE" as const,
+    ...(isPopular && { id: { in: popularIds! } }),
     ...(categorySlug && {
       category: { slug: categorySlug },
     }),
@@ -65,7 +79,7 @@ export default async function CommunityPage({
         category: { select: { name: true, slug: true } },
         _count: { select: { comments: true } },
       },
-      orderBy: isPopular ? { likeCount: "desc" } : { createdAt: "desc" },
+      orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * POSTS_PER_PAGE,
       take: POSTS_PER_PAGE,
     }),
