@@ -105,9 +105,13 @@ export default async function PostDetailPage({
             </div>
           </div>
 
-          {/* 좋아요 + 작성자 액션 */}
-          <div className="px-6 pb-6 flex items-center justify-between">
+          {/* 좋아요/싫어요 */}
+          <div className="px-6 pb-4 flex justify-center">
             <LikeButton postId={post.id} userReaction={userReaction} likeCount={post.likeCount} dislikeCount={post.dislikeCount} />
+          </div>
+
+          {/* 작성자 액션 */}
+          <div className="px-6 pb-6 flex items-center justify-end">
             {isAuthor && (
               <div className="flex gap-2">
                 <Link
