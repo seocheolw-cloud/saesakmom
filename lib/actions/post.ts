@@ -33,6 +33,11 @@ export async function createPost(
     },
   });
 
+  // 경험치 부여
+  const { addExp } = await import("./exp");
+  const { EXP_REWARDS } = await import("@/lib/level");
+  await addExp(session.user.id, EXP_REWARDS.POST);
+
   redirect(`/community/${post.id}`);
 }
 

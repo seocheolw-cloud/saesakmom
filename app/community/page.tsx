@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Header } from "@/app/components/Header";
+import { getLevelIcon } from "@/lib/level";
 
 const POSTS_PER_PAGE = 20;
 
@@ -60,7 +61,7 @@ export default async function CommunityPage({
     prisma.post.findMany({
       where,
       include: {
-        author: { select: { nickname: true } },
+        author: { select: { nickname: true, level: true } },
         category: { select: { name: true, slug: true } },
         _count: { select: { comments: true } },
       },
@@ -159,6 +160,9 @@ export default async function CommunityPage({
                   <span className="text-[14px] text-foreground truncate">
                     {post.title}
                   </span>
+                  {post.images.length > 0 && (
+                    <span className="shrink-0 text-[12px]" title="이미지 첨부">🖼️</span>
+                  )}
                   {Date.now() - post.createdAt.getTime() < 3600000 && (
                     <span className="shrink-0 text-red-500 text-[11px] font-bold">
                       N
@@ -172,14 +176,14 @@ export default async function CommunityPage({
                 </div>
                 {/* 모바일: 메타 한줄 */}
                 <div className="flex items-center gap-3 mt-1.5 md:hidden text-xs text-muted">
-                  <span>{post.author.nickname}</span>
+                  <span>{getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}</span>
                   <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
                   <span>추천 {post.likeCount}</span>
                   <span>조회 {post.viewCount}</span>
                 </div>
                 {/* 데스크톱: 각 컬럼 */}
                 <span className="hidden md:block text-xs text-muted text-center truncate">
-                  {post.author.nickname}
+                  {getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}
                 </span>
                 <span className="hidden md:block text-xs text-muted text-center">
                   {post.createdAt.toLocaleDateString("ko-KR")}

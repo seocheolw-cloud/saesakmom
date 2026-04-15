@@ -43,6 +43,11 @@ export async function createComment(
     },
   });
 
+  // 경험치 부여
+  const { addExp } = await import("./exp");
+  const { EXP_REWARDS } = await import("@/lib/level");
+  await addExp(session.user.id, EXP_REWARDS.COMMENT);
+
   // 알림 생성
   const { createNotification } = await import("./notification");
   const post = await prisma.post.findUnique({

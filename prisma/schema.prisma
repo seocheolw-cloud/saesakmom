@@ -17,6 +17,8 @@ model User {
   password      String?
   nickname      String    @unique
   profileImage  String?
+  level         Int        @default(1)
+  exp           Int        @default(0)
   role          Role      @default(USER)
   status        UserStatus @default(ACTIVE)
   createdAt     DateTime  @default(now())

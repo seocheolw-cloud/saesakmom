@@ -52,6 +52,10 @@ export async function togglePostReaction(postId: string, type: "LIKE" | "DISLIKE
           message: `${session.user.nickname}님이 "${post.title}" 글을 좋아합니다`,
           postId,
         });
+        // 글 작성자에게 경험치
+        const { addExp } = await import("./exp");
+        const { EXP_REWARDS } = await import("@/lib/level");
+        await addExp(post.authorId, EXP_REWARDS.LIKED);
       }
     }
   }

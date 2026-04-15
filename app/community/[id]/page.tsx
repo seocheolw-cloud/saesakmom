@@ -6,6 +6,7 @@ import { Header } from "@/app/components/Header";
 import { DeleteButton } from "./DeleteButton";
 import { LikeButton } from "./LikeButton";
 import { CommentSection } from "./CommentSection";
+import { getLevelIcon } from "@/lib/level";
 
 export default async function PostDetailPage({
   params,
@@ -18,7 +19,7 @@ export default async function PostDetailPage({
   const post = await prisma.post.findUnique({
     where: { id, status: "ACTIVE" },
     include: {
-      author: { select: { id: true, nickname: true } },
+      author: { select: { id: true, nickname: true, level: true } },
       category: { select: { name: true, slug: true } },
       _count: { select: { comments: true } },
     },
@@ -46,12 +47,12 @@ export default async function PostDetailPage({
   const comments = await prisma.comment.findMany({
     where: { postId: id, status: "ACTIVE", parentId: null },
     include: {
-      author: { select: { id: true, nickname: true } },
+      author: { select: { id: true, nickname: true, level: true } },
       likes: session?.user ? { where: { userId: session.user.id }, select: { type: true } } : false,
       replies: {
         where: { status: "ACTIVE" },
         include: {
-          author: { select: { id: true, nickname: true } },
+          author: { select: { id: true, nickname: true, level: true } },
           likes: session?.user ? { where: { userId: session.user.id }, select: { type: true } } : false,
         },
         orderBy: { createdAt: "asc" },
@@ -82,7 +83,7 @@ export default async function PostDetailPage({
                 href={`/user/${post.author.id}`}
                 className="font-medium text-foreground hover:text-primary transition-colors"
               >
-                {post.author.nickname}
+                {getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}
               </Link>
               <span>
                 {post.createdAt.toLocaleDateString("ko-KR", {
