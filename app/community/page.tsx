@@ -8,11 +8,13 @@ const POSTS_PER_PAGE = 20;
 export default async function CommunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; page?: string; sort?: string }>;
+  searchParams: Promise<{ category?: string; page?: string; sort?: string; searchType?: string; q?: string }>;
 }) {
   const params = await searchParams;
   const categorySlug = params.category;
   const sort = params.sort;
+  const searchType = params.searchType || "title_content";
+  const query = params.q?.trim() || "";
   const currentPage = Math.max(1, Number(params.page) || 1);
   const session = await auth();
 
@@ -23,11 +25,35 @@ export default async function CommunityPage({
 
   const isPopular = sort === "popular";
 
+  // 검색 조건
+  let searchWhere = {};
+  if (query) {
+    switch (searchType) {
+      case "title":
+        searchWhere = { title: { contains: query, mode: "insensitive" as const } };
+        break;
+      case "nickname":
+        searchWhere = { author: { nickname: { contains: query, mode: "insensitive" as const } } };
+        break;
+      case "comment":
+        searchWhere = { comments: { some: { content: { contains: query, mode: "insensitive" as const } } } };
+        break;
+      default: // title_content
+        searchWhere = {
+          OR: [
+            { title: { contains: query, mode: "insensitive" as const } },
+            { content: { contains: query, mode: "insensitive" as const } },
+          ],
+        };
+    }
+  }
+
   const where = {
     status: "ACTIVE" as const,
     ...(categorySlug && {
       category: { slug: categorySlug },
     }),
+    ...searchWhere,
   };
 
   const [posts, totalCount] = await Promise.all([
@@ -176,6 +202,7 @@ export default async function CommunityPage({
               const queryParts: string[] = [];
               if (categorySlug) queryParts.push(`category=${categorySlug}`);
               if (isPopular) queryParts.push("sort=popular");
+              if (query) queryParts.push(`searchType=${searchType}`, `q=${encodeURIComponent(query)}`);
               queryParts.push(`page=${page}`);
               const href = `/community?${queryParts.join("&")}`;
 
@@ -193,6 +220,43 @@ export default async function CommunityPage({
                 </Link>
               );
             })}
+          </div>
+        )}
+        {/* 검색 */}
+        <form action="/community" className="mt-6 flex items-center justify-center gap-2">
+          {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
+          {isPopular && <input type="hidden" name="sort" value="popular" />}
+          <select
+            name="searchType"
+            defaultValue={query ? searchType : "title_content"}
+            className="h-9 rounded-lg border border-[#d4d4d4] bg-white px-2 text-xs text-foreground focus:outline-none focus:border-primary"
+          >
+            <option value="title_content">제목+본문</option>
+            <option value="title">제목</option>
+            <option value="nickname">닉네임</option>
+            <option value="comment">댓글</option>
+          </select>
+          <input
+            type="text"
+            name="q"
+            defaultValue={query}
+            placeholder="검색어를 입력하세요"
+            className="h-9 w-48 rounded-lg border border-[#d4d4d4] bg-white px-3 text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+          />
+          <button
+            type="submit"
+            className="h-9 px-4 rounded-lg bg-primary text-xs font-semibold text-white hover:bg-primary-hover transition-colors"
+          >
+            검색
+          </button>
+        </form>
+
+        {query && (
+          <div className="mt-3 text-center text-xs text-muted">
+            &quot;{query}&quot; 검색 결과 {totalCount}건
+            <Link href="/community" className="ml-2 text-primary hover:underline">
+              초기화
+            </Link>
           </div>
         )}
       </main>
