@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useEffect, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createComment, deleteComment, type CommentFormState } from "@/lib/actions/comment";
 import { toggleCommentReaction } from "@/lib/actions/like";
@@ -80,6 +81,19 @@ function CommentForm({
   );
 }
 
+function DeleteCommentButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="text-xs text-[#fb5957] hover:opacity-75 transition-opacity disabled:opacity-40"
+    >
+      {pending ? "삭제 중..." : "삭제"}
+    </button>
+  );
+}
+
 function SmallThumbUp({ active }: { active: boolean }) {
   return (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
@@ -126,7 +140,7 @@ function ReactionButtons({
             : "border-[#d4d4d4] text-[#94969b] hover:bg-gray-50"
         }`}
       >
-        <SmallThumbUp active={userReaction === "LIKE"} /> {likeCount > 0 && likeCount}
+        <SmallThumbUp active={userReaction === "LIKE"} /> {Math.max(0, likeCount) > 0 && Math.max(0, likeCount)}
       </button>
       <button
         onClick={() => startTransition(() => toggleCommentReaction(commentId, postId, "DISLIKE"))}
@@ -137,7 +151,7 @@ function ReactionButtons({
             : "border-[#d4d4d4] text-[#94969b] hover:bg-gray-50"
         }`}
       >
-        <SmallThumbDown active={userReaction === "DISLIKE"} /> {dislikeCount > 0 && dislikeCount}
+        <SmallThumbDown active={userReaction === "DISLIKE"} /> {Math.max(0, dislikeCount) > 0 && Math.max(0, dislikeCount)}
       </button>
     </div>
   );
@@ -188,12 +202,7 @@ function CommentItem({
             )}
             {currentUserId === comment.author.id && (
               <form action={deleteComment.bind(null, comment.id, postId)}>
-                <button
-                  type="submit"
-                  className="text-xs text-[#fb5957] hover:opacity-75 transition-opacity"
-                >
-                  삭제
-                </button>
+                <DeleteCommentButton />
               </form>
             )}
           </div>

@@ -15,7 +15,7 @@ export default async function CommunityPage({
   const categorySlug = params.category;
   const sort = params.sort;
   const searchType = params.searchType || "title_content";
-  const query = params.q?.trim() || "";
+  const query = (params.q?.trim() || "").slice(0, 100);
   const currentPage = Math.max(1, Number(params.page) || 1);
   const session = await auth();
 
@@ -244,6 +244,7 @@ export default async function CommunityPage({
             type="text"
             name="q"
             defaultValue={query}
+            maxLength={100}
             placeholder="검색어를 입력하세요"
             className="h-9 w-48 rounded-lg border border-[#d4d4d4] bg-white px-3 text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
           />

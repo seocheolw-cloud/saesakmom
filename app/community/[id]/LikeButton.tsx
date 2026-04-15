@@ -68,7 +68,7 @@ export function LikeButton({
         }`}
       >
         <ThumbUpIcon active={userReaction === "LIKE"} />
-        {likeCount}
+        {Math.max(0, likeCount)}
       </button>
       <button
         onClick={() => startTransition(() => togglePostReaction(postId, "DISLIKE"))}
@@ -80,7 +80,7 @@ export function LikeButton({
         }`}
       >
         <ThumbDownIcon active={userReaction === "DISLIKE"} />
-        {dislikeCount}
+        {Math.max(0, dislikeCount)}
       </button>
     </div>
   );
