@@ -32,6 +32,11 @@ model User {
   reports       Report[]
   notifications Notification[]
 
+  productComments    ProductComment[]      @relation("ProductComments")
+  comparisons        ProductComparison[]   @relation("Comparisons")
+  comparisonVotes    ComparisonVote[]      @relation("ComparisonVotes")
+  comparisonComments ComparisonComment[]   @relation("ComparisonComments")
+
   @@map("users")
 }
 
@@ -208,87 +213,147 @@ model Report {
 // 육아용품 비교
 // ==========================================
 
+model ProductType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  brands     ProductBrand[]
+  specFields ProductSpecField[]
+  products   Product[]
+
+  @@map("product_types")
+}
+
+model ProductBrand {
+  id        String      @id @default(cuid())
+  name      String
+  typeId    String
+  type      ProductType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  products Product[]
+
+  @@unique([typeId, name])
+  @@map("product_brands")
+}
+
 model Product {
-  id            String        @id @default(cuid())
-  name          String
-  brand         String
-  categorySlug  String
-  priceMin      Int?
-  priceMax      Int?
-  releaseDate   String?
-  imageUrl      String?
-  ageRangeStart Int?
-  ageRangeEnd   Int?
-  origin        String?
-  status        ProductStatus @default(DRAFT)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  name        String
+  description String?       @db.Text
+  price       Int?
+  imageUrl    String?
+  typeId      String
+  brandId     String
+  status      ProductStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  specs          ProductSpec[]
-  certifications ProductCertification[]
-  reviews        ProductReviewSummary?
-  scores         ProductScore?
+  type  ProductType  @relation(fields: [typeId], references: [id])
+  brand ProductBrand @relation(fields: [brandId], references: [id])
 
-  @@index([categorySlug, status])
+  specValues   ProductSpecValue[]
+  comments     ProductComment[]
+  comparisonsA ProductComparison[] @relation("ComparisonProductA")
+  comparisonsB ProductComparison[] @relation("ComparisonProductB")
+
+  @@index([typeId, status])
   @@map("products")
 }
 
-model ProductSpec {
-  id        String @id @default(cuid())
-  key       String
+model ProductSpecField {
+  id        String      @id @default(cuid())
+  name      String
+  unit      String?
+  sortOrder Int         @default(0)
+  typeId    String
+  type      ProductType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  values ProductSpecValue[]
+
+  @@unique([typeId, name])
+  @@map("product_spec_fields")
+}
+
+model ProductSpecValue {
+  id        String           @id @default(cuid())
   value     String
-  sortOrder Int    @default(0)
-
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fieldId   String
+  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  field     ProductSpecField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, key])
-  @@map("product_specs")
+  @@unique([productId, fieldId])
+  @@map("product_spec_values")
 }
 
-model ProductCertification {
-  id     String  @id @default(cuid())
-  type   String
-  name   String
-  number String?
-  note   String?
-
+model ProductComment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
 
-  @@map("product_certifications")
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  author  User    @relation("ProductComments", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("product_comments")
 }
 
-model ProductReviewSummary {
-  id              String   @id @default(cuid())
-  totalReviews    Int      @default(0)
-  avgRating       Float    @default(0)
-  prosKeywords    String[]
-  consKeywords    String[]
-  prosReviews     String[]
-  consReviews     String[]
-  recommendFor    String?  @db.Text
-  notRecommendFor String?  @db.Text
-  sources         String[]
-  analyzedAt      DateTime @default(now())
+model ProductComparison {
+  id         String   @id @default(cuid())
+  productAId String
+  productBId String
+  creatorId  String
+  voteACount Int      @default(0)
+  voteBCount Int      @default(0)
+  createdAt  DateTime @default(now())
 
-  productId String  @unique
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productA Product @relation("ComparisonProductA", fields: [productAId], references: [id])
+  productB Product @relation("ComparisonProductB", fields: [productBId], references: [id])
+  creator  User    @relation("Comparisons", fields: [creatorId], references: [id])
 
-  @@map("product_review_summaries")
+  votes    ComparisonVote[]
+  comments ComparisonComment[]
+
+  @@unique([productAId, productBId])
+  @@map("product_comparisons")
 }
 
-model ProductScore {
-  id               String @id @default(cuid())
-  valueScore       Float  @default(0)
-  popularityScore  Float  @default(0)
-  overallScore     Float  @default(0)
-  similarProducts  String[]
+model ComparisonVote {
+  id           String           @id @default(cuid())
+  comparisonId String
+  userId       String
+  choice       ComparisonChoice
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  productId String  @unique
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  comparison ProductComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  user       User              @relation("ComparisonVotes", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("product_scores")
+  @@unique([comparisonId, userId])
+  @@map("comparison_votes")
+}
+
+model ComparisonComment {
+  id           String   @id @default(cuid())
+  content      String   @db.Text
+  comparisonId String
+  authorId     String
+  createdAt    DateTime @default(now())
+
+  comparison ProductComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  author     User              @relation("ComparisonComments", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comparison_comments")
+}
+
+enum ComparisonChoice {
+  A
+  B
 }
 
 // ==========================================
