@@ -105,9 +105,10 @@ model Post {
   title      String
   content    String     @db.Text
   images     String[]
-  viewCount  Int        @default(0)
-  likeCount  Int        @default(0)
-  status     PostStatus @default(ACTIVE)
+  viewCount     Int        @default(0)
+  likeCount     Int        @default(0)
+  dislikeCount  Int        @default(0)
+  status        PostStatus @default(ACTIVE)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
@@ -140,11 +141,13 @@ model PostTag {
 }
 
 model Comment {
-  id        String        @id @default(cuid())
-  content   String        @db.Text
-  status    CommentStatus @default(ACTIVE)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  content      String        @db.Text
+  likeCount    Int           @default(0)
+  dislikeCount Int           @default(0)
+  status       CommentStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   authorId String
   postId   String
@@ -154,6 +157,7 @@ model Comment {
   post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies       Comment[]      @relation("CommentReplies")
+  likes         Like[]
   reports       Report[]
   notifications Notification[]
 
@@ -163,15 +167,19 @@ model Comment {
 
 model Like {
   id        String   @id @default(cuid())
+  type      LikeType @default(LIKE)
   createdAt DateTime @default(now())
 
-  userId String
-  postId String
+  userId    String
+  postId    String?
+  commentId String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+  @@unique([userId, commentId])
   @@map("likes")
 }
 
@@ -341,6 +349,11 @@ enum UserStatus {
   WARNED
   SUSPENDED
   BANNED
+}
+
+enum LikeType {
+  LIKE
+  DISLIKE
 }
 
 enum PostStatus {

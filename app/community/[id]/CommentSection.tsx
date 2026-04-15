@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { createComment, deleteComment, type CommentFormState } from "@/lib/actions/comment";
+import { toggleCommentReaction } from "@/lib/actions/like";
 
 type Author = { id: string; nickname: string };
 
@@ -10,16 +11,22 @@ type Reply = {
   id: string;
   content: string;
   status: string;
+  likeCount: number;
+  dislikeCount: number;
   createdAt: Date;
   author: Author;
+  likes?: { type: string }[];
 };
 
 type Comment = {
   id: string;
   content: string;
   status: string;
+  likeCount: number;
+  dislikeCount: number;
   createdAt: Date;
   author: Author;
+  likes?: { type: string }[];
   replies: Reply[];
 };
 
@@ -73,6 +80,49 @@ function CommentForm({
   );
 }
 
+function ReactionButtons({
+  commentId,
+  postId,
+  likeCount,
+  dislikeCount,
+  userReaction,
+}: {
+  commentId: string;
+  postId: string;
+  likeCount: number;
+  dislikeCount: number;
+  userReaction: string | null;
+}) {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div className="flex items-center gap-1.5 mt-2">
+      <button
+        onClick={() => startTransition(() => toggleCommentReaction(commentId, postId, "LIKE"))}
+        disabled={pending}
+        className={`inline-flex items-center gap-1 h-6 px-2 rounded border text-[11px] transition-colors cursor-pointer disabled:opacity-50 ${
+          userReaction === "LIKE"
+            ? "border-red-300 bg-red-50 text-red-500"
+            : "border-[#d4d4d4] text-[#94969b] hover:bg-gray-50"
+        }`}
+      >
+        👍 {likeCount > 0 && likeCount}
+      </button>
+      <button
+        onClick={() => startTransition(() => toggleCommentReaction(commentId, postId, "DISLIKE"))}
+        disabled={pending}
+        className={`inline-flex items-center gap-1 h-6 px-2 rounded border text-[11px] transition-colors cursor-pointer disabled:opacity-50 ${
+          userReaction === "DISLIKE"
+            ? "border-blue-300 bg-blue-50 text-blue-500"
+            : "border-[#d4d4d4] text-[#94969b] hover:bg-gray-50"
+        }`}
+      >
+        👎 {dislikeCount > 0 && dislikeCount}
+      </button>
+    </div>
+  );
+}
+
 function CommentItem({
   comment,
   postId,
@@ -83,6 +133,7 @@ function CommentItem({
   currentUserId?: string;
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const userReaction = comment.likes?.[0]?.type ?? null;
 
   return (
     <div className="border-b border-[#d4d4d4] last:border-b-0">
@@ -128,6 +179,13 @@ function CommentItem({
           </div>
         </div>
         <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
+        <ReactionButtons
+          commentId={comment.id}
+          postId={postId}
+          likeCount={comment.likeCount}
+          dislikeCount={comment.dislikeCount}
+          userReaction={userReaction}
+        />
 
         {showReplyForm && (
           <div className="mt-3">
@@ -145,40 +203,50 @@ function CommentItem({
       {/* Replies */}
       {comment.replies.length > 0 && (
         <div className="ml-8 border-l border-[#d4d4d4]">
-          {comment.replies.map((reply) => (
-            <div key={reply.id} className="p-4 border-b border-[#d4d4d4] last:border-b-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/user/${reply.author.id}`}
-                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-                  >
-                    {reply.author.nickname}
-                  </Link>
-                  <span className="text-xs text-[#94969b]">
-                    {new Date(reply.createdAt).toLocaleDateString("ko-KR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                {currentUserId === reply.author.id && (
-                  <form action={deleteComment.bind(null, reply.id, postId)}>
-                    <button
-                      type="submit"
-                      className="text-xs text-[#fb5957] hover:opacity-75 transition-opacity"
+          {comment.replies.map((reply) => {
+            const replyReaction = reply.likes?.[0]?.type ?? null;
+            return (
+              <div key={reply.id} className="p-4 border-b border-[#d4d4d4] last:border-b-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/user/${reply.author.id}`}
+                      className="text-sm font-medium text-foreground hover:text-primary transition-colors"
                     >
-                      삭제
-                    </button>
-                  </form>
-                )}
+                      {reply.author.nickname}
+                    </Link>
+                    <span className="text-xs text-[#94969b]">
+                      {new Date(reply.createdAt).toLocaleDateString("ko-KR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  {currentUserId === reply.author.id && (
+                    <form action={deleteComment.bind(null, reply.id, postId)}>
+                      <button
+                        type="submit"
+                        className="text-xs text-[#fb5957] hover:opacity-75 transition-opacity"
+                      >
+                        삭제
+                      </button>
+                    </form>
+                  )}
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{reply.content}</p>
+                <ReactionButtons
+                  commentId={reply.id}
+                  postId={postId}
+                  likeCount={reply.likeCount}
+                  dislikeCount={reply.dislikeCount}
+                  userReaction={replyReaction}
+                />
               </div>
-              <p className="text-sm text-foreground whitespace-pre-wrap">{reply.content}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

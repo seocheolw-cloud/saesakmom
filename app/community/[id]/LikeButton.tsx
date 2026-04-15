@@ -1,43 +1,51 @@
 "use client";
 
-import { toggleLike } from "@/lib/actions/like";
+import { togglePostReaction } from "@/lib/actions/like";
 import { useTransition } from "react";
 
 export function LikeButton({
   postId,
-  liked,
+  userReaction,
   likeCount,
+  dislikeCount,
 }: {
   postId: string;
-  liked: boolean;
+  userReaction: "LIKE" | "DISLIKE" | null;
   likeCount: number;
+  dislikeCount: number;
 }) {
   const [pending, startTransition] = useTransition();
 
   return (
-    <button
-      onClick={() => startTransition(() => toggleLike(postId))}
-      disabled={pending}
-      className={`inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
-        liked
-          ? "border-red-300 bg-red-50 text-red-500"
-          : "border-[#d4d4d4] text-[#5F6B7C] hover:bg-gray-50"
-      }`}
-    >
-      <svg
-        className="w-4 h-4"
-        fill={liked ? "currentColor" : "none"}
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => startTransition(() => togglePostReaction(postId, "LIKE"))}
+        disabled={pending}
+        className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-lg border text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+          userReaction === "LIKE"
+            ? "border-red-300 bg-red-50 text-red-500"
+            : "border-[#d4d4d4] text-[#5F6B7C] hover:bg-gray-50"
+        }`}
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-        />
-      </svg>
-      좋아요 {likeCount}
-    </button>
+        <svg className="w-4 h-4" fill={userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z M4 15v7" />
+        </svg>
+        {likeCount}
+      </button>
+      <button
+        onClick={() => startTransition(() => togglePostReaction(postId, "DISLIKE"))}
+        disabled={pending}
+        className={`inline-flex items-center gap-1 h-9 px-3.5 rounded-lg border text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+          userReaction === "DISLIKE"
+            ? "border-blue-300 bg-blue-50 text-blue-500"
+            : "border-[#d4d4d4] text-[#5F6B7C] hover:bg-gray-50"
+        }`}
+      >
+        <svg className="w-4 h-4" fill={userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z M20 2v7" />
+        </svg>
+        {dislikeCount}
+      </button>
+    </div>
   );
 }

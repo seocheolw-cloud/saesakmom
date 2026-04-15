@@ -34,21 +34,26 @@ export default async function PostDetailPage({
     data: { viewCount: { increment: 1 } },
   });
 
-  // 좋아요 여부
-  const liked = session?.user
-    ? !!(await prisma.like.findUnique({
+  // 좋아요/싫어요 여부
+  const userLike = session?.user
+    ? await prisma.like.findUnique({
         where: { userId_postId: { userId: session.user.id, postId: id } },
-      }))
-    : false;
+      })
+    : null;
+  const userReaction = userLike?.type ?? null;
 
   // 댓글 (대댓글 포함)
   const comments = await prisma.comment.findMany({
     where: { postId: id, status: "ACTIVE", parentId: null },
     include: {
       author: { select: { id: true, nickname: true } },
+      likes: session?.user ? { where: { userId: session.user.id }, select: { type: true } } : false,
       replies: {
         where: { status: "ACTIVE" },
-        include: { author: { select: { id: true, nickname: true } } },
+        include: {
+          author: { select: { id: true, nickname: true } },
+          likes: session?.user ? { where: { userId: session.user.id }, select: { type: true } } : false,
+        },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -101,7 +106,7 @@ export default async function PostDetailPage({
 
           {/* 좋아요 + 작성자 액션 */}
           <div className="px-6 pb-6 flex items-center justify-between">
-            <LikeButton postId={post.id} liked={liked} likeCount={post.likeCount} />
+            <LikeButton postId={post.id} userReaction={userReaction} likeCount={post.likeCount} dislikeCount={post.dislikeCount} />
             {isAuthor && (
               <div className="flex gap-2">
                 <Link

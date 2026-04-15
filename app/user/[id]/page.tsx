@@ -46,7 +46,7 @@ export default async function UserProfilePage({
       take: 20,
     });
     posts = await prisma.post.findMany({
-      where: { id: { in: likes.map((l) => l.postId) }, status: "ACTIVE" },
+      where: { id: { in: likes.map((l) => l.postId).filter((id): id is string => id !== null) }, status: "ACTIVE" },
       include: {
         author: { select: { nickname: true } },
         category: { select: { name: true } },
