@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const CommentSchema = z.object({
-  content: z.string().min(1, "댓글을 입력하세요"),
+  content: z.string().trim().min(1, "댓글을 입력하세요"),
 });
 
 export type CommentFormState = {
@@ -32,6 +32,15 @@ export async function createComment(
 
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  // 삭제된 게시글에 댓글 방지
+  const targetPost = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { status: true },
+  });
+  if (!targetPost || targetPost.status !== "ACTIVE") {
+    return { message: "삭제된 게시글입니다." };
   }
 
   const comment = await prisma.comment.create({

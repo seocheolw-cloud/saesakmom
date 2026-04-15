@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PostSchema, type PostFormState } from "@/lib/validations/post";
@@ -24,21 +25,27 @@ export async function createPost(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const post = await prisma.post.create({
-    data: {
-      title: parsed.data.title,
-      content: parsed.data.content,
-      categoryId: parsed.data.categoryId,
-      authorId: session.user.id,
-    },
-  });
+  let postId: string;
+  try {
+    const post = await prisma.post.create({
+      data: {
+        title: parsed.data.title,
+        content: parsed.data.content,
+        categoryId: parsed.data.categoryId,
+        authorId: session.user.id,
+      },
+    });
+    postId = post.id;
+  } catch {
+    return { message: "게시글 작성에 실패했습니다." };
+  }
 
-  // 경험치 부여
   const { addExp } = await import("./exp");
   const { EXP_REWARDS } = await import("@/lib/level");
   await addExp(session.user.id, EXP_REWARDS.POST);
 
-  redirect(`/community/${post.id}`);
+  revalidatePath("/community");
+  redirect(`/community/${postId}`);
 }
 
 export async function updatePost(
@@ -66,15 +73,21 @@ export async function updatePost(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  await prisma.post.update({
-    where: { id: postId },
-    data: {
-      title: parsed.data.title,
-      content: parsed.data.content,
-      categoryId: parsed.data.categoryId,
-    },
-  });
+  try {
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
+        title: parsed.data.title,
+        content: parsed.data.content,
+        categoryId: parsed.data.categoryId,
+      },
+    });
+  } catch {
+    return { message: "게시글 수정에 실패했습니다." };
+  }
 
+  revalidatePath("/community");
+  revalidatePath(`/community/${postId}`);
   redirect(`/community/${postId}`);
 }
 
@@ -94,5 +107,6 @@ export async function deletePost(postId: string): Promise<void> {
     data: { status: "DELETED" },
   });
 
+  revalidatePath("/community");
   redirect("/community");
 }
