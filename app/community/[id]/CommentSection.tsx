@@ -82,20 +82,20 @@ function CommentForm({
 
 function SmallThumbUp({ active }: { active: boolean }) {
   return (
-    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" fill={active ? "currentColor" : "none"} />
-      <line x1="3" y1="15.5" x2="7" y2="15.5" stroke="#3b82f6" strokeWidth={2.5} strokeLinecap="round" />
-      <path d="M4 15v7" />
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+      <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="2.5" y="13" width="5" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.5} />
+      <rect x="2.5" y="14.5" width="5" height="3" rx="0.5" fill="#3b82f6" />
     </svg>
   );
 }
 
 function SmallThumbDown({ active }: { active: boolean }) {
   return (
-    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z" fill={active ? "currentColor" : "none"} />
-      <line x1="17" y1="8.5" x2="21" y2="8.5" stroke="#ef4444" strokeWidth={2.5} strokeLinecap="round" />
-      <path d="M20 2v7" />
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+      <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="16.5" y="2" width="5" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth={1.5} />
+      <rect x="16.5" y="5.5" width="5" height="3" rx="0.5" fill="#ef4444" />
     </svg>
   );
 }
