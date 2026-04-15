@@ -130,7 +130,7 @@ export default async function CommunityPage({
                   <span className="text-xs font-semibold text-primary shrink-0">
                     [{post.category.name}]
                   </span>
-                  <span className="text-[14px] font-semibold text-foreground truncate">
+                  <span className="text-[14px] text-foreground truncate">
                     {post.title}
                   </span>
                   {post._count.comments > 0 && (

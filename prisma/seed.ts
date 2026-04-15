@@ -114,6 +114,7 @@ async function main() {
   }
 
   let postCount = 0;
+  const postIds: string[] = [];
   for (let i = 0; i < dummyPosts.length; i++) {
     const post = dummyPosts[i];
     const authorId = userIds[i % userIds.length];
@@ -125,9 +126,12 @@ async function main() {
     const existing = await prisma.post.findFirst({
       where: { title: post.title },
     });
-    if (existing) continue;
+    if (existing) {
+      postIds.push(existing.id);
+      continue;
+    }
 
-    await prisma.post.create({
+    const created = await prisma.post.create({
       data: {
         title: post.title,
         content: post.content,
@@ -138,9 +142,83 @@ async function main() {
         createdAt: new Date(Date.now() - (dummyPosts.length - i) * 3600000),
       },
     });
+    postIds.push(created.id);
     postCount++;
   }
   console.log(`Posts seeded (${postCount})`);
+
+  // 더미 댓글 시드
+  const dummyComments = [
+    "저도 같은 고민이에요! 좋은 정보 감사합니다 😊",
+    "우와 정말 도움이 많이 되네요~ 감사해요!",
+    "공감합니다 ㅠㅠ 힘내세요!",
+    "오 이건 몰랐던 정보네요! 메모해둡니다",
+    "저는 이렇게 했더니 효과 봤어요~ 참고해보세요",
+    "좋은 글이네요 북마크 해둡니다!",
+    "비슷한 경험이 있어서 댓글 남겨요. 저도 처음엔 막막했는데 시간이 지나니 괜찮아지더라고요.",
+    "정말요? 저도 한번 시도해봐야겠어요",
+    "맞아요 맞아요~ 저도 완전 공감!",
+    "이 글 보고 용기 얻었어요. 감사합니다 ❤️",
+    "혹시 구체적으로 어떤 제품 쓰셨어요?",
+    "저도 궁금했던 건데 마침 글이 올라왔네요",
+    "경험담 공유 감사합니다! 참고할게요~",
+    "ㅋㅋㅋ 너무 공감돼서 웃었어요",
+    "아이고 고생 많으셨네요. 힘내세요!",
+    "저희 아이도 비슷했는데 지금은 많이 나아졌어요",
+    "좋은 팁이네요! 저도 해봐야겠어요",
+    "와 대박 이런 방법이 있었군요",
+    "첫째 때 이 글 봤으면 좋았을 텐데 ㅠ",
+    "댓글 보고 더 많이 배워갑니다~",
+  ];
+
+  let commentCount = 0;
+  for (let i = 0; i < postIds.length; i++) {
+    const postId = postIds[i];
+    const numComments = (i % 5) + 1; // 1~5개 댓글
+
+    for (let j = 0; j < numComments; j++) {
+      const authorId = userIds[(i + j + 1) % userIds.length];
+      const commentText = dummyComments[(i * 3 + j) % dummyComments.length];
+
+      const existing = await prisma.comment.findFirst({
+        where: { postId, content: commentText },
+      });
+      if (existing) continue;
+
+      const parent = await prisma.comment.create({
+        data: {
+          content: commentText,
+          authorId,
+          postId,
+          createdAt: new Date(Date.now() - (dummyPosts.length - i) * 3600000 + (j + 1) * 600000),
+        },
+      });
+      commentCount++;
+
+      // 일부 댓글에 답글 추가
+      if (j === 0 && numComments >= 3) {
+        const replyAuthorId = userIds[(i + j + 2) % userIds.length];
+        const replyText = dummyComments[(i * 3 + j + 7) % dummyComments.length];
+
+        const existingReply = await prisma.comment.findFirst({
+          where: { postId, parentId: parent.id },
+        });
+        if (!existingReply) {
+          await prisma.comment.create({
+            data: {
+              content: replyText,
+              authorId: replyAuthorId,
+              postId,
+              parentId: parent.id,
+              createdAt: new Date(Date.now() - (dummyPosts.length - i) * 3600000 + (j + 2) * 600000),
+            },
+          });
+          commentCount++;
+        }
+      }
+    }
+  }
+  console.log(`Comments seeded (${commentCount})`);
 }
 
 main()
