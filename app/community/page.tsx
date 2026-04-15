@@ -133,6 +133,11 @@ export default async function CommunityPage({
                   <span className="text-[14px] text-foreground truncate">
                     {post.title}
                   </span>
+                  {Date.now() - post.createdAt.getTime() < 3600000 && (
+                    <span className="shrink-0 text-red-500 text-[11px] font-bold">
+                      N
+                    </span>
+                  )}
                   {post._count.comments > 0 && (
                     <span className="shrink-0 bg-gray-100 text-gray-500 text-[11px] font-medium px-1.5 py-0.5 rounded">
                       {post._count.comments}
