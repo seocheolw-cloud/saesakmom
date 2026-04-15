@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Header } from "@/app/components/Header";
-import { getLevelIcon } from "@/lib/level";
+import { LevelBadge } from "@/components/LevelBadge";
 
 const POSTS_PER_PAGE = 20;
 
@@ -176,14 +176,14 @@ export default async function CommunityPage({
                 </div>
                 {/* 모바일: 메타 한줄 */}
                 <div className="flex items-center gap-3 mt-1.5 md:hidden text-xs text-muted">
-                  <span>{getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}</span>
+                  <span className="inline-flex items-center gap-1"><LevelBadge level={post.author.level} />{post.author.nickname}</span>
                   <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
                   <span>추천 {post.likeCount}</span>
                   <span>조회 {post.viewCount}</span>
                 </div>
                 {/* 데스크톱: 각 컬럼 */}
-                <span className="hidden md:block text-xs text-muted text-center truncate">
-                  {getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}
+                <span className="hidden md:flex items-center justify-center gap-1 text-xs text-muted truncate">
+                  <LevelBadge level={post.author.level} />{post.author.nickname}
                 </span>
                 <span className="hidden md:block text-xs text-muted text-center">
                   {post.createdAt.toLocaleDateString("ko-KR")}

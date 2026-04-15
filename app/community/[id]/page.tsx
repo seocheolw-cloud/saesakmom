@@ -6,7 +6,7 @@ import { Header } from "@/app/components/Header";
 import { DeleteButton } from "./DeleteButton";
 import { LikeButton } from "./LikeButton";
 import { CommentSection } from "./CommentSection";
-import { getLevelIcon } from "@/lib/level";
+import { LevelBadge } from "@/components/LevelBadge";
 
 export default async function PostDetailPage({
   params,
@@ -81,9 +81,9 @@ export default async function PostDetailPage({
             <div className="flex items-center gap-3 text-sm text-muted">
               <Link
                 href={`/user/${post.author.id}`}
-                className="font-medium text-foreground hover:text-primary transition-colors"
+                className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
               >
-                {getLevelIcon(post.author.level)}{post.author.level} {post.author.nickname}
+                <LevelBadge level={post.author.level} />{post.author.nickname}
               </Link>
               <span>
                 {post.createdAt.toLocaleDateString("ko-KR", {

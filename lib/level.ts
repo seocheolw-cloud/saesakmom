@@ -31,6 +31,19 @@ export function getLevelIcon(level: number): string {
   return LEVEL_ICONS[Math.min(level, 5) - 1] || LEVEL_ICONS[0];
 }
 
+// 레벨별 배지 색상 (bg, text)
+const LEVEL_COLORS = [
+  "bg-green-100 text-green-700",      // Lv.1
+  "bg-emerald-100 text-emerald-700",   // Lv.2
+  "bg-sky-100 text-sky-700",           // Lv.3
+  "bg-purple-100 text-purple-700",     // Lv.4
+  "bg-amber-100 text-amber-700",       // Lv.5
+];
+
+export function getLevelColor(level: number): string {
+  return LEVEL_COLORS[Math.min(level, 5) - 1] || LEVEL_COLORS[0];
+}
+
 export function getNextLevelExp(level: number): number | null {
   if (level >= 5) return null;
   return LEVEL_THRESHOLDS[level];
