@@ -25,6 +25,7 @@ export async function Header() {
             { name: "홈", href: "/" },
             { name: "커뮤니티", href: "/community" },
             { name: "육아용품", href: "/products" },
+            { name: "비교", href: "/compare" },
           ].map((item) => (
             <Link
               key={item.name}
