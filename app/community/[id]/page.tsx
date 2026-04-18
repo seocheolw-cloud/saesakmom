@@ -7,6 +7,9 @@ import { DeleteButton } from "./DeleteButton";
 import { LikeButton } from "./LikeButton";
 import { CommentSection } from "./CommentSection";
 import { LevelBadge } from "@/components/LevelBadge";
+import { ContentRenderer } from "@/app/components/ContentRenderer";
+import { ReportPostButton } from "./ReportPostButton";
+import { BackToListButton } from "./BackToListButton";
 
 export default async function PostDetailPage({
   params,
@@ -67,6 +70,8 @@ export default async function PostDetailPage({
     <div className="min-h-screen bg-[#f0f4f8]">
       <Header />
       <main className="max-w-[800px] mx-auto px-4 py-8">
+        <BackToListButton />
+        <div className="mb-4" />
         <article className="bg-white rounded-xl border border-[#d4d4d4] overflow-hidden">
           {/* 헤더 */}
           <div className="p-6 border-b border-border">
@@ -100,9 +105,7 @@ export default async function PostDetailPage({
 
           {/* 본문 */}
           <div className="p-6">
-            <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </div>
+            <ContentRenderer content={post.content} />
           </div>
 
           {/* 좋아요/싫어요 */}
@@ -110,8 +113,13 @@ export default async function PostDetailPage({
             <LikeButton postId={post.id} userReaction={userReaction} likeCount={post.likeCount} dislikeCount={post.dislikeCount} />
           </div>
 
-          {/* 작성자 액션 */}
-          <div className="px-6 pb-6 flex items-center justify-end">
+          {/* 액션 */}
+          <div className="px-6 pb-6 flex items-center justify-between">
+            <div>
+              {session?.user && !isAuthor && (
+                <ReportPostButton postId={post.id} />
+              )}
+            </div>
             {isAuthor && (
               <div className="flex gap-2">
                 <Link
@@ -134,12 +142,7 @@ export default async function PostDetailPage({
         />
 
         <div className="mt-4">
-          <Link
-            href="/community"
-            className="text-sm text-muted hover:text-primary transition-colors"
-          >
-            ← 목록으로
-          </Link>
+          <BackToListButton />
         </div>
       </main>
     </div>

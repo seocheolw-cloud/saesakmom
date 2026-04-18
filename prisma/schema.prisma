@@ -21,6 +21,7 @@ model User {
   exp           Int        @default(0)
   role          Role      @default(USER)
   status        UserStatus @default(ACTIVE)
+  suspendedUntil DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -131,6 +132,7 @@ model Post {
   reports       Report[]
   notifications Notification[]
 
+  @@index([authorId])
   @@index([categoryId, createdAt(sort: Desc)])
   @@index([likeCount(sort: Desc)])
   @@map("posts")
@@ -162,12 +164,13 @@ model Comment {
 
   author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
   replies       Comment[]      @relation("CommentReplies")
   likes         Like[]
   reports       Report[]
   notifications Notification[]
 
+  @@index([authorId])
   @@index([postId, createdAt])
   @@map("comments")
 }
@@ -202,7 +205,7 @@ model Report {
   postId     String?
   commentId  String?
 
-  reporter User     @relation(fields: [reporterId], references: [id])
+  reporter User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   post     Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   comment  Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
@@ -252,8 +255,8 @@ model Product {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  type  ProductType  @relation(fields: [typeId], references: [id])
-  brand ProductBrand @relation(fields: [brandId], references: [id])
+  type  ProductType  @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  brand ProductBrand @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
   specValues   ProductSpecValue[]
   comments     ProductComment[]
@@ -261,6 +264,7 @@ model Product {
   comparisonsB ProductComparison[] @relation("ComparisonProductB")
 
   @@index([typeId, status])
+  @@index([brandId])
   @@map("products")
 }
 
@@ -295,11 +299,17 @@ model ProductComment {
   content   String   @db.Text
   productId String
   authorId  String
+  parentId  String?
+  updatedAt DateTime?
   createdAt DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  author  User    @relation("ProductComments", fields: [authorId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  author  User            @relation("ProductComments", fields: [authorId], references: [id], onDelete: Cascade)
+  parent  ProductComment? @relation("ProductCommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies ProductComment[] @relation("ProductCommentReplies")
 
+  @@index([productId])
+  @@index([authorId])
   @@map("product_comments")
 }
 
@@ -312,14 +322,15 @@ model ProductComparison {
   voteBCount Int      @default(0)
   createdAt  DateTime @default(now())
 
-  productA Product @relation("ComparisonProductA", fields: [productAId], references: [id])
-  productB Product @relation("ComparisonProductB", fields: [productBId], references: [id])
-  creator  User    @relation("Comparisons", fields: [creatorId], references: [id])
+  productA Product @relation("ComparisonProductA", fields: [productAId], references: [id], onDelete: Cascade)
+  productB Product @relation("ComparisonProductB", fields: [productBId], references: [id], onDelete: Cascade)
+  creator  User    @relation("Comparisons", fields: [creatorId], references: [id], onDelete: Cascade)
 
   votes    ComparisonVote[]
   comments ComparisonComment[]
 
   @@unique([productAId, productBId])
+  @@index([creatorId])
   @@map("product_comparisons")
 }
 
@@ -343,11 +354,17 @@ model ComparisonComment {
   content      String   @db.Text
   comparisonId String
   authorId     String
+  parentId     String?
+  updatedAt    DateTime?
   createdAt    DateTime @default(now())
 
-  comparison ProductComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
-  author     User              @relation("ComparisonComments", fields: [authorId], references: [id], onDelete: Cascade)
+  comparison ProductComparison  @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  author     User               @relation("ComparisonComments", fields: [authorId], references: [id], onDelete: Cascade)
+  parent     ComparisonComment?  @relation("ComparisonCommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies    ComparisonComment[] @relation("ComparisonCommentReplies")
 
+  @@index([comparisonId])
+  @@index([authorId])
   @@map("comparison_comments")
 }
 
@@ -383,6 +400,35 @@ enum NotificationType {
   LIKE
   COMMENT
   REPLY
+}
+
+// ==========================================
+// 페이지 방문 로그
+// ==========================================
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([path, createdAt])
+  @@index([createdAt])
+  @@map("page_views")
+}
+
+// ==========================================
+// 검색 로그
+// ==========================================
+
+model SearchLog {
+  id        String   @id @default(cuid())
+  keyword   String
+  createdAt DateTime @default(now())
+
+  @@index([keyword, createdAt])
+  @@index([createdAt])
+  @@map("search_logs")
 }
 
 // ==========================================

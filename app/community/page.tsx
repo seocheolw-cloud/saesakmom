@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Header } from "@/app/components/Header";
 import { LevelBadge } from "@/components/LevelBadge";
+import { logSearch } from "@/lib/actions/search";
 
 const POSTS_PER_PAGE = 20;
 
@@ -24,7 +25,13 @@ export default async function CommunityPage({
     orderBy: { sortOrder: "asc" },
   });
 
-  const isPopular = sort === "popular";
+  const isAll = sort === "all";
+  const isPopular = sort === "popular" || (!sort && !categorySlug && !query);
+
+  // 검색어 로깅
+  if (query) {
+    logSearch(query).catch(() => {});
+  }
 
   // 검색 조건
   let searchWhere = {};
@@ -88,8 +95,6 @@ export default async function CommunityPage({
 
   const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
 
-  const isAll = !categorySlug && !isPopular;
-
   return (
     <div className="min-h-screen bg-[#f0f4f8]">
       <Header />
@@ -99,22 +104,22 @@ export default async function CommunityPage({
           <Link
             href="/community"
             className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
-              isAll
-                ? "bg-foreground text-white"
-                : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
-            }`}
-          >
-            전체
-          </Link>
-          <Link
-            href="/community?sort=popular"
-            className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
               isPopular
                 ? "bg-foreground text-white"
                 : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
             }`}
           >
             인기글
+          </Link>
+          <Link
+            href="/community?sort=all"
+            className={`h-8 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center transition-all ${
+              isAll
+                ? "bg-foreground text-white"
+                : "bg-white text-[#5F6B7C] border border-[#d4d4d4] hover:border-[#94969b]"
+            }`}
+          >
+            전체
           </Link>
           {categories.map((cat) => (
             <Link
@@ -189,7 +194,7 @@ export default async function CommunityPage({
                   )}
                 </div>
                 {/* 모바일: 메타 한줄 */}
-                <div className="flex items-center gap-3 mt-1.5 md:hidden text-xs text-muted">
+                <div className="flex flex-wrap items-center gap-3 mt-1.5 md:hidden text-xs text-muted">
                   <span className="inline-flex items-center gap-1"><LevelBadge level={post.author.level} />{post.author.nickname}</span>
                   <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
                   <span>추천 {post.likeCount}</span>
@@ -214,34 +219,50 @@ export default async function CommunityPage({
         </div>
 
         {/* 페이지네이션 */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-1 mt-6">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-              const queryParts: string[] = [];
-              if (categorySlug) queryParts.push(`category=${categorySlug}`);
-              if (isPopular) queryParts.push("sort=popular");
-              if (query) queryParts.push(`searchType=${searchType}`, `q=${encodeURIComponent(query)}`);
-              queryParts.push(`page=${page}`);
-              const href = `/community?${queryParts.join("&")}`;
+        {totalPages > 1 && (() => {
+          const pages: (number | "ellipsis")[] = [];
+          const rangeStart = Math.max(2, currentPage - 2);
+          const rangeEnd = Math.min(totalPages - 1, currentPage + 2);
 
-              return (
-                <Link
-                  key={page}
-                  href={href}
-                  className={`w-9 h-9 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-colors ${
-                    page === currentPage
-                      ? "bg-primary text-white"
-                      : "text-[#5F6B7C] hover:bg-gray-50 border border-[#d4d4d4]"
-                  }`}
-                >
-                  {page}
-                </Link>
-              );
-            })}
-          </div>
-        )}
+          pages.push(1);
+          if (rangeStart > 2) pages.push("ellipsis");
+          for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
+          if (rangeEnd < totalPages - 1) pages.push("ellipsis");
+          if (totalPages > 1) pages.push(totalPages);
+
+          function buildHref(page: number) {
+            const queryParts: string[] = [];
+            if (categorySlug) queryParts.push(`category=${categorySlug}`);
+            if (sort) queryParts.push(`sort=${sort}`);
+            if (query) queryParts.push(`searchType=${searchType}`, `q=${encodeURIComponent(query)}`);
+            queryParts.push(`page=${page}`);
+            return `/community?${queryParts.join("&")}`;
+          }
+
+          return (
+            <div className="flex justify-center gap-1 mt-6">
+              {pages.map((page, idx) =>
+                page === "ellipsis" ? (
+                  <span key={`ellipsis-${idx}`} className="w-9 h-9 inline-flex items-center justify-center text-sm text-muted">...</span>
+                ) : (
+                  <Link
+                    key={page}
+                    href={buildHref(page)}
+                    className={`w-9 h-9 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-colors ${
+                      page === currentPage
+                        ? "bg-primary text-white"
+                        : "text-[#5F6B7C] hover:bg-gray-50 border border-[#d4d4d4]"
+                    }`}
+                  >
+                    {page}
+                  </Link>
+                )
+              )}
+            </div>
+          );
+        })()}
         {/* 검색 */}
-        <form action="/community" className="mt-6 flex items-center justify-center gap-2">
+        <form action="/community" className="mt-6 flex flex-wrap items-center justify-center gap-2">
           {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
           {isPopular && <input type="hidden" name="sort" value="popular" />}
           <select
@@ -260,7 +281,7 @@ export default async function CommunityPage({
             defaultValue={query}
             maxLength={100}
             placeholder="검색어를 입력하세요"
-            className="h-9 w-48 rounded-lg border border-[#d4d4d4] bg-white px-3 text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
+            className="h-9 flex-1 min-w-0 rounded-lg border border-[#d4d4d4] bg-white px-3 text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-primary"
           />
           <button
             type="submit"

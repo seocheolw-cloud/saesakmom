@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createComment, deleteComment, type CommentFormState } from "@/lib/actions/comment";
 import { toggleCommentReaction } from "@/lib/actions/like";
+import { reportComment } from "@/lib/actions/report";
 
 type Author = { id: string; nickname: string };
 
@@ -157,6 +158,29 @@ function ReactionButtons({
   );
 }
 
+function ReplyToReply({ replyAuthorNickname, parentId, postId, currentUserId }: {
+  replyAuthorNickname: string; parentId: string; postId: string; currentUserId?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!currentUserId) return null;
+  return (
+    <div className="mt-1">
+      <button type="button" onClick={() => setOpen(!open)} className="text-xs text-[#94969b] hover:text-primary transition-colors">답글</button>
+      {open && (
+        <div className="mt-2">
+          <CommentForm
+            postId={postId}
+            parentId={parentId}
+            placeholder={`${replyAuthorNickname}님에게 답글`}
+            compact
+            onSuccess={() => setOpen(false)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommentItem({
   comment,
   postId,
@@ -170,7 +194,7 @@ function CommentItem({
   const userReaction = comment.likes?.[0]?.type ?? null;
 
   return (
-    <div className="border-b border-[#d4d4d4] last:border-b-0">
+    <div className={`border-b border-[#d4d4d4] last:border-b-0 ${currentUserId === comment.author.id ? "bg-primary/5" : ""}`}>
       {/* Main comment */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-1.5">
@@ -192,13 +216,14 @@ function CommentItem({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {currentUserId && (
-              <button
-                onClick={() => setShowReplyForm((v) => !v)}
-                className="text-xs text-[#94969b] hover:text-primary transition-colors"
-              >
-                답글
-              </button>
+            {currentUserId && currentUserId !== comment.author.id && (
+              <button type="button" onClick={async () => {
+                const reason = prompt("신고 사유를 입력해주세요");
+                if (!reason) return;
+                const res = await reportComment(comment.id, reason);
+                if (res.success) alert("신고가 접수되었습니다.");
+                else if (res.message) alert(res.message);
+              }} className="text-xs text-gray-400 hover:text-gray-500 transition-colors">신고</button>
             )}
             {currentUserId === comment.author.id && (
               <form action={deleteComment.bind(null, comment.id, postId)}>
@@ -215,6 +240,9 @@ function CommentItem({
           dislikeCount={comment.dislikeCount}
           userReaction={userReaction}
         />
+        {currentUserId && (
+          <button onClick={() => setShowReplyForm((v) => !v)} className="text-xs text-[#94969b] hover:text-primary transition-colors mt-1">답글</button>
+        )}
 
         {showReplyForm && (
           <div className="mt-3">
@@ -235,7 +263,7 @@ function CommentItem({
           {comment.replies.map((reply) => {
             const replyReaction = reply.likes?.[0]?.type ?? null;
             return (
-              <div key={reply.id} className="p-4 border-b border-[#d4d4d4] last:border-b-0">
+              <div key={reply.id} className={`p-4 border-b border-[#d4d4d4] last:border-b-0 ${currentUserId === reply.author.id ? "bg-primary/5" : ""}`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <Link
@@ -254,6 +282,15 @@ function CommentItem({
                       })}
                     </span>
                   </div>
+                  {currentUserId && currentUserId !== reply.author.id && (
+                    <button type="button" onClick={async () => {
+                      const reason = prompt("신고 사유를 입력해주세요");
+                      if (!reason) return;
+                      const res = await reportComment(reply.id, reason);
+                      if (res.success) alert("신고가 접수되었습니다.");
+                      else if (res.message) alert(res.message);
+                    }} className="text-xs text-gray-400 hover:text-gray-500 transition-colors">신고</button>
+                  )}
                   {currentUserId === reply.author.id && (
                     <form action={deleteComment.bind(null, reply.id, postId)}>
                       <button
@@ -272,6 +309,12 @@ function CommentItem({
                   likeCount={reply.likeCount}
                   dislikeCount={reply.dislikeCount}
                   userReaction={replyReaction}
+                />
+                <ReplyToReply
+                  replyAuthorNickname={reply.author.nickname}
+                  parentId={comment.id}
+                  postId={postId}
+                  currentUserId={currentUserId}
                 />
               </div>
             );

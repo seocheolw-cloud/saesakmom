@@ -34,6 +34,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isValid) return null;
 
+        if (user.status === "BANNED") return null;
+
         return {
           id: user.id,
           email: user.email,
@@ -47,14 +49,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "credentials") {
+        const dbUser = await prisma.user.findUnique({ where: { email: user.email! }, select: { status: true } });
+        if (dbUser && dbUser.status === "BANNED") return false;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
+      }
+      if (token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { id: true, role: true, nickname: true },
+          where: { id: token.id as string },
+          select: { role: true, nickname: true },
         });
         if (dbUser) {
-          token.id = dbUser.id;
           token.role = dbUser.role;
           token.nickname = dbUser.nickname;
         }

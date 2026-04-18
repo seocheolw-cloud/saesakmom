@@ -11,21 +11,27 @@ export default async function MyPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      email: true,
-      nickname: true,
-      createdAt: true,
-      _count: {
-        select: {
-          posts: true,
-          comments: true,
-        },
+  const [user, myPosts, myComments] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true, email: true, nickname: true, createdAt: true,
+        _count: { select: { posts: { where: { status: "ACTIVE" } }, comments: { where: { status: "ACTIVE" } } } },
       },
-    },
-  });
+    }),
+    prisma.post.findMany({
+      where: { authorId: session.user.id, status: "ACTIVE" },
+      select: { id: true, title: true, createdAt: true, viewCount: true, likeCount: true, category: { select: { name: true } }, _count: { select: { comments: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    prisma.comment.findMany({
+      where: { authorId: session.user.id, status: "ACTIVE", post: { status: "ACTIVE" } },
+      select: { id: true, content: true, createdAt: true, post: { select: { id: true, title: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   if (!user) {
     redirect("/login");
@@ -44,11 +50,6 @@ export default async function MyPage() {
           <h2 className="text-base font-bold text-foreground mb-5">내 정보</h2>
 
           <div className="space-y-4">
-            <div className="flex items-center">
-              <span className="w-24 text-sm text-muted shrink-0">아이디</span>
-              <span className="text-sm text-foreground">{user.id}</span>
-            </div>
-
             <div className="flex items-center">
               <span className="w-24 text-sm text-muted shrink-0">이메일</span>
               <span className="text-sm text-foreground">{user.email}</span>
@@ -73,6 +74,8 @@ export default async function MyPage() {
         <TabContent
           postCount={user._count.posts}
           commentCount={user._count.comments}
+          posts={myPosts.map((p) => ({ id: p.id, title: p.title, category: p.category.name, createdAt: p.createdAt.toISOString(), viewCount: p.viewCount, likeCount: p.likeCount, commentCount: p._count.comments }))}
+          comments={myComments.map((c) => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), postId: c.post.id, postTitle: c.post.title }))}
         />
       </main>
     </div>

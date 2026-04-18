@@ -56,7 +56,7 @@ export function SpecFieldManager({ types, fields }: { types: TypeOption[]; field
                   <td className="px-4 py-3">{f.name}</td>
                   <td className="px-4 py-3 text-muted">{f.unit || "-"}</td>
                   <td className="px-4 py-3 text-center">
-                    <form action={deleteProductSpecField.bind(null, f.id)}>
+                    <form action={deleteProductSpecField.bind(null, f.id)} onSubmit={(e) => { if (!confirm('정말 삭제하시겠습니까?')) e.preventDefault() }}>
                       <button type="submit" className="text-xs text-error hover:opacity-75">삭제</button>
                     </form>
                   </td>

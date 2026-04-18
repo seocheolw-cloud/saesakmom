@@ -26,6 +26,9 @@ export async function updateNickname(
     return { message: "로그인이 필요합니다" };
   }
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return { message: "계정이 차단되었습니다." };
+
   const parsed = UpdateNicknameSchema.safeParse({
     nickname: formData.get("nickname"),
   });

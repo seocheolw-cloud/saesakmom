@@ -22,6 +22,8 @@ const categories = [
   { name: "자유게시판", slug: "free", sortOrder: 8 },
 ];
 
+const adminUser = { email: "admin@saesakmom.com", nickname: "admin", password: "7856pass!!" };
+
 const dummyUsers = [
   { email: "sunny@example.com", nickname: "햇살맘", password: "test1234" },
   { email: "cloud@example.com", nickname: "구름이맘", password: "test1234" },
@@ -100,14 +102,24 @@ const dummyPosts: { category: string; title: string; content: string; likeCount:
 const productTypes = [
   { name: "카시트", slug: "carseat", sortOrder: 1 },
   { name: "유모차", slug: "stroller", sortOrder: 2 },
-  { name: "젖병", slug: "bottle", sortOrder: 3 },
-  { name: "기저귀", slug: "diaper", sortOrder: 4 },
+  { name: "아기침대", slug: "crib", sortOrder: 3 },
+  { name: "젖병", slug: "bottle", sortOrder: 4 },
+  { name: "젖병소독기", slug: "sterilizer", sortOrder: 5 },
+  { name: "분유쉐이커", slug: "formula-shaker", sortOrder: 6 },
+  { name: "아기비데", slug: "baby-bidet", sortOrder: 7 },
+  { name: "기저귀 갈이대", slug: "changing-table", sortOrder: 8 },
+  { name: "기저귀", slug: "diaper", sortOrder: 9 },
 ];
 
 const productBrands: Record<string, string[]> = {
   carseat: ["사이벡스", "맥시코시", "다이치", "순성"],
   stroller: ["부가부", "스토케", "잉글레시나", "실버크로스"],
+  crib: ["스토케", "이케아", "그라코", "치코"],
   bottle: ["닥터브라운", "아벤트", "헤겐", "보네스"],
+  sterilizer: ["유팡", "파세코", "필립스아벤트", "코멧"],
+  "formula-shaker": ["베이비브레짜", "버니", "톰티피", "하겐"],
+  "baby-bidet": ["노비타", "룰루비데", "크린비데", "위닉스"],
+  "changing-table": ["이케아", "스토케", "팔랑", "쁘띠라뺑"],
   diaper: ["하기스", "팸퍼스", "마미포코", "보솜이"],
 };
 
@@ -126,11 +138,41 @@ const productSpecFields: Record<string, { name: string; unit?: string }[]> = {
     { name: "바퀴크기", unit: "인치" },
     { name: "양대면여부" },
   ],
+  crib: [
+    { name: "크기", unit: "cm" },
+    { name: "높이조절단수" },
+    { name: "소재" },
+    { name: "범퍼포함여부" },
+  ],
   bottle: [
     { name: "용량", unit: "ml" },
     { name: "소재" },
     { name: "꼭지단계" },
     { name: "세척편의성" },
+  ],
+  sterilizer: [
+    { name: "소독방식" },
+    { name: "용량", unit: "개" },
+    { name: "건조기능" },
+    { name: "소독시간", unit: "분" },
+  ],
+  "formula-shaker": [
+    { name: "용량", unit: "ml" },
+    { name: "전원방식" },
+    { name: "온도조절" },
+    { name: "소음" },
+  ],
+  "baby-bidet": [
+    { name: "수압조절" },
+    { name: "온수기능" },
+    { name: "설치방식" },
+    { name: "노즐세척" },
+  ],
+  "changing-table": [
+    { name: "높이", unit: "cm" },
+    { name: "접이식여부" },
+    { name: "수납공간" },
+    { name: "최대하중", unit: "kg" },
   ],
   diaper: [
     { name: "사이즈범위" },
@@ -157,6 +199,29 @@ const productData: [string, string, string, number, string, string[]][] = [
   ["diaper", "하기스", "매직컴포트", 35000, "부드러운 착용감과 뛰어난 흡수력.", ["3~8kg (2단계)", "44매", "순면커버", "A+"]],
   ["diaper", "팸퍼스", "베이비드라이", 32000, "최대 12시간 보송함. 새지 않는 3중 흡수층.", ["4~8kg (2단계)", "46매", "코튼소프트", "A"]],
   ["diaper", "마미포코", "에어핏 팬티", 25000, "가성비 좋은 팬티형 기저귀.", ["7~11kg (3단계)", "40매", "통기성시트", "B+"]],
+  // 아기침대
+  ["crib", "스토케", "슬리피 V3", 1290000, "성장에 맞춰 확장 가능한 프리미엄 아기침대.", ["120x60", "3단", "너도밤나무 원목", "X"]],
+  ["crib", "이케아", "스니글라르", 89000, "심플한 디자인의 가성비 아기침대.", ["120x60", "2단", "너도밤나무", "X"]],
+  ["crib", "그라코", "솔라노 4in1", 350000, "4단계 변환 가능한 다기능 침대.", ["140x70", "4단", "소나무 원목", "O"]],
+  ["crib", "치코", "넥스트투미 매직", 450000, "부모 침대에 밀착 가능한 사이드 오픈형.", ["100x50", "6단", "메시+원목", "O"]],
+  // 젖병소독기
+  ["sterilizer", "유팡", "젖병소독기 PLUS", 189000, "UV+열풍 건조 방식의 대용량 소독기.", ["UV+열풍", "16", "O", "10"]],
+  ["sterilizer", "파세코", "UV소독기", 159000, "99.9% 살균력의 UV-C LED 소독기.", ["UV", "12", "O", "8"]],
+  ["sterilizer", "필립스아벤트", "스팀소독기", 79000, "전자레인지 없이 간편한 스팀 소독.", ["스팀", "6", "X", "6"]],
+  ["sterilizer", "코멧", "올인원 소독기", 129000, "소독+건조+보관 올인원.", ["UV+스팀", "10", "O", "12"]],
+  // 분유쉐이커
+  ["formula-shaker", "베이비브레짜", "포뮬라 프로", 290000, "원터치 자동 분유 제조기. 온도 자동 조절.", ["240", "전기", "37~70도", "저소음"]],
+  ["formula-shaker", "버니", "쉐이커 미니", 59000, "휴대용 보틀 쉐이커. USB 충전.", ["300", "USB충전", "X", "보통"]],
+  ["formula-shaker", "톰티피", "퍼펙트프렙", 250000, "2분만에 체온 분유 완성.", ["200", "전기", "37도 고정", "저소음"]],
+  // 아기비데
+  ["baby-bidet", "노비타", "베이비케어", 189000, "아기 전용 비데. 부드러운 수압.", ["3단", "O", "변기 장착", "자동"]],
+  ["baby-bidet", "룰루비데", "키즈워시", 149000, "이동식 아기 비데. 어디서든 사용.", ["2단", "O", "이동식", "수동"]],
+  ["baby-bidet", "크린비데", "베이비", 129000, "컴팩트한 설계의 아기 비데.", ["3단", "X", "변기 장착", "자동"]],
+  // 기저귀 갈이대
+  ["changing-table", "이케아", "스뇌글", 79000, "벽걸이형 접이식 기저귀 교환대.", ["87", "O", "2칸", "15"]],
+  ["changing-table", "스토케", "케어 체인징테이블", 890000, "높이 조절 가능한 프리미엄 갈이대.", ["조절가능", "X", "대형수납", "25"]],
+  ["changing-table", "팔랑", "접이식 갈이대", 129000, "간편한 접이식 기저귀 갈이대.", ["95", "O", "하단선반", "15"]],
+  ["changing-table", "쁘띠라뺑", "이동형 갈이대", 169000, "바퀴 달린 이동형 갈이대.", ["100", "X", "3단수납", "20"]],
 ];
 
 async function main() {
@@ -175,6 +240,20 @@ async function main() {
     });
   }
   console.log("Categories seeded");
+
+  // 관리자 유저 시드
+  const adminHashedPassword = await bcrypt.hash(adminUser.password, 10);
+  await prisma.user.upsert({
+    where: { email: adminUser.email },
+    update: { role: "ADMIN", nickname: adminUser.nickname, password: adminHashedPassword },
+    create: {
+      email: adminUser.email,
+      nickname: adminUser.nickname,
+      password: adminHashedPassword,
+      role: "ADMIN",
+    },
+  });
+  console.log("Admin user seeded (ID: admin)");
 
   // 더미 유저 시드
   const hashedPassword = await bcrypt.hash("test1234", 10);

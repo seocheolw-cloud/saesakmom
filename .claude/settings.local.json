@@ -18,7 +18,12 @@
       "Bash(curl:*)",
       "Bash(git checkout:*)",
       "Read(//tmp/**)",
-      "Bash(tee /tmp/baseline.sql)"
+      "Bash(tee /tmp/baseline.sql)",
+      "Bash(npx next *)",
+      "Bash(taskkill //f //im node.exe)",
+      "Bash(rm -rf C:/Projects/saesakmom/.next)",
+      "Bash(grep -o \"Unknown argument[^\\\\\\\\\\\\\\\\]*\")",
+      "Bash(grep -o \"PrismaClient[^\\\\\\\\\\\\\\\\]*\")"
     ]
   }
 }

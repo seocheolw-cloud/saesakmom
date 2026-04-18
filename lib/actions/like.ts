@@ -5,122 +5,102 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function togglePostReaction(postId: string, type: "LIKE" | "DISLIKE"): Promise<void> {
+  if (type !== "LIKE" && type !== "DISLIKE") return;
   const session = await auth();
   if (!session?.user) return;
 
-  try {
-    const existing = await prisma.like.findUnique({
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return;
+
+  let shouldNotify = false;
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.like.findUnique({
       where: { userId_postId: { userId: session.user.id, postId } },
     });
 
     if (existing) {
       if (existing.type === type) {
-        await prisma.$transaction([
-          prisma.like.delete({ where: { id: existing.id } }),
-          prisma.post.update({
-            where: { id: postId },
-            data: type === "LIKE"
-              ? { likeCount: { decrement: 1 } }
-              : { dislikeCount: { decrement: 1 } },
-          }),
-        ]);
+        await tx.like.delete({ where: { id: existing.id } });
+        await tx.post.update({
+          where: { id: postId },
+          data: type === "LIKE" ? { likeCount: { decrement: 1 } } : { dislikeCount: { decrement: 1 } },
+        });
       } else {
-        await prisma.$transaction([
-          prisma.like.update({ where: { id: existing.id }, data: { type } }),
-          prisma.post.update({
-            where: { id: postId },
-            data: type === "LIKE"
-              ? { likeCount: { increment: 1 }, dislikeCount: { decrement: 1 } }
-              : { likeCount: { decrement: 1 }, dislikeCount: { increment: 1 } },
-          }),
-        ]);
-      }
-    } else {
-      await prisma.$transaction([
-        prisma.like.create({
-          data: { userId: session.user.id, postId, type },
-        }),
-        prisma.post.update({
+        await tx.like.update({ where: { id: existing.id }, data: { type } });
+        await tx.post.update({
           where: { id: postId },
           data: type === "LIKE"
-            ? { likeCount: { increment: 1 } }
-            : { dislikeCount: { increment: 1 } },
-        }),
-      ]);
-
-      if (type === "LIKE") {
-        const { createNotification } = await import("./notification");
-        const post = await prisma.post.findUnique({
-          where: { id: postId },
-          select: { authorId: true, title: true },
+            ? { likeCount: { increment: 1 }, dislikeCount: { decrement: 1 } }
+            : { likeCount: { decrement: 1 }, dislikeCount: { increment: 1 } },
         });
-        if (post) {
-          await createNotification({
-            userId: post.authorId,
-            type: "LIKE",
-            message: `${session.user.nickname}님이 "${post.title}" 글을 좋아합니다`,
-            postId,
-          });
-          const { addExp } = await import("./exp");
-          const { EXP_REWARDS } = await import("@/lib/level");
-          await addExp(post.authorId, EXP_REWARDS.LIKED);
-        }
       }
+    } else {
+      await tx.like.create({ data: { type, userId: session.user.id, postId } });
+      await tx.post.update({
+        where: { id: postId },
+        data: type === "LIKE" ? { likeCount: { increment: 1 } } : { dislikeCount: { increment: 1 } },
+      });
+      shouldNotify = true;
     }
-  } catch {
-    // DB 에러 시 무시 (이미 삭제된 좋아요 등)
+  });
+
+  if (shouldNotify && type === "LIKE") {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true, title: true },
+    });
+    if (post && post.authorId !== session.user.id) {
+      const { createNotification } = await import("@/lib/notifications");
+      await createNotification({
+        userId: post.authorId,
+        type: "LIKE",
+        message: `${session.user.nickname}님이 "${post.title}" 글을 좋아합니다`,
+        postId,
+      });
+    }
   }
 
   revalidatePath(`/community/${postId}`);
 }
 
 export async function toggleCommentReaction(commentId: string, postId: string, type: "LIKE" | "DISLIKE"): Promise<void> {
+  if (type !== "LIKE" && type !== "DISLIKE") return;
   const session = await auth();
   if (!session?.user) return;
 
-  try {
-    const existing = await prisma.like.findUnique({
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return;
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.like.findUnique({
       where: { userId_commentId: { userId: session.user.id, commentId } },
     });
 
     if (existing) {
       if (existing.type === type) {
-        await prisma.$transaction([
-          prisma.like.delete({ where: { id: existing.id } }),
-          prisma.comment.update({
-            where: { id: commentId },
-            data: type === "LIKE"
-              ? { likeCount: { decrement: 1 } }
-              : { dislikeCount: { decrement: 1 } },
-          }),
-        ]);
+        await tx.like.delete({ where: { id: existing.id } });
+        await tx.comment.update({
+          where: { id: commentId },
+          data: type === "LIKE" ? { likeCount: { decrement: 1 } } : { dislikeCount: { decrement: 1 } },
+        });
       } else {
-        await prisma.$transaction([
-          prisma.like.update({ where: { id: existing.id }, data: { type } }),
-          prisma.comment.update({
-            where: { id: commentId },
-            data: type === "LIKE"
-              ? { likeCount: { increment: 1 }, dislikeCount: { decrement: 1 } }
-              : { likeCount: { decrement: 1 }, dislikeCount: { increment: 1 } },
-          }),
-        ]);
-      }
-    } else {
-      await prisma.$transaction([
-        prisma.like.create({
-          data: { userId: session.user.id, commentId, type },
-        }),
-        prisma.comment.update({
+        await tx.like.update({ where: { id: existing.id }, data: { type } });
+        await tx.comment.update({
           where: { id: commentId },
           data: type === "LIKE"
-            ? { likeCount: { increment: 1 } }
-            : { dislikeCount: { increment: 1 } },
-        }),
-      ]);
+            ? { likeCount: { increment: 1 }, dislikeCount: { decrement: 1 } }
+            : { likeCount: { decrement: 1 }, dislikeCount: { increment: 1 } },
+        });
+      }
+    } else {
+      await tx.like.create({ data: { type, userId: session.user.id, commentId } });
+      await tx.comment.update({
+        where: { id: commentId },
+        data: type === "LIKE" ? { likeCount: { increment: 1 } } : { dislikeCount: { increment: 1 } },
+      });
     }
-  } catch {
-    // DB 에러 시 무시
-  }
+  });
 
   revalidatePath(`/community/${postId}`);
 }

@@ -15,6 +15,9 @@ export async function createPost(
     redirect("/login");
   }
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return { message: "계정이 차단되었습니다." };
+
   const parsed = PostSchema.safeParse({
     categoryId: formData.get("categoryId"),
     title: formData.get("title"),
@@ -25,6 +28,9 @@ export async function createPost(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
+  const images = formData.getAll("images") as string[];
+  const validImages = images.filter((url) => url.startsWith("/uploads/"));
+
   let postId: string;
   try {
     const post = await prisma.post.create({
@@ -33,6 +39,7 @@ export async function createPost(
         content: parsed.data.content,
         categoryId: parsed.data.categoryId,
         authorId: session.user.id,
+        images: validImages,
       },
     });
     postId = post.id;
@@ -58,6 +65,9 @@ export async function updatePost(
     redirect("/login");
   }
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return { message: "계정이 차단되었습니다." };
+
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post || post.authorId !== session.user.id) {
     return { message: "수정 권한이 없습니다" };
@@ -73,6 +83,9 @@ export async function updatePost(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
+  const images = formData.getAll("images") as string[];
+  const validImages = images.filter((url) => url.startsWith("/uploads/"));
+
   try {
     await prisma.post.update({
       where: { id: postId },
@@ -80,6 +93,7 @@ export async function updatePost(
         title: parsed.data.title,
         content: parsed.data.content,
         categoryId: parsed.data.categoryId,
+        images: validImages,
       },
     });
   } catch {
@@ -97,8 +111,11 @@ export async function deletePost(postId: string): Promise<void> {
     redirect("/login");
   }
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status === "BANNED") return;
+
   const post = await prisma.post.findUnique({ where: { id: postId } });
-  if (!post || post.authorId !== session.user.id) {
+  if (!post || (post.authorId !== session.user.id && session.user.role !== "ADMIN")) {
     return;
   }
 

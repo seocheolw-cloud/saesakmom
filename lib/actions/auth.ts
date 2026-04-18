@@ -48,7 +48,11 @@ export async function register(
     },
   });
 
-  redirect("/login?registered=true");
+  await signIn("credentials", {
+    email,
+    password,
+    redirectTo: "/",
+  });
 }
 
 export async function login(

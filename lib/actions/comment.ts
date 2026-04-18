@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const CommentSchema = z.object({
-  content: z.string().trim().min(1, "댓글을 입력하세요"),
+  content: z.string().trim().min(1, "댓글을 입력하세요").max(5000),
 });
 
 export type CommentFormState = {
@@ -24,6 +24,17 @@ export async function createComment(
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
+  }
+
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true, suspendedUntil: true } });
+  if (!dbUser || dbUser.status === "BANNED") return { message: "계정이 차단되었습니다." };
+  if (dbUser.status === "SUSPENDED") {
+    if (dbUser.suspendedUntil && dbUser.suspendedUntil <= new Date()) {
+      await prisma.user.update({ where: { id: session.user.id }, data: { status: "ACTIVE", suspendedUntil: null } });
+    } else {
+      const until = dbUser.suspendedUntil ? dbUser.suspendedUntil.toLocaleDateString("ko-KR") : "";
+      return { message: `${until}까지 댓글 작성이 정지된 상태입니다.` };
+    }
   }
 
   const parsed = CommentSchema.safeParse({
@@ -58,7 +69,7 @@ export async function createComment(
   await addExp(session.user.id, EXP_REWARDS.COMMENT);
 
   // 알림 생성
-  const { createNotification } = await import("./notification");
+  const { createNotification } = await import("@/lib/notifications");
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { authorId: true, title: true },
@@ -98,8 +109,11 @@ export async function deleteComment(commentId: string, postId: string): Promise<
   const session = await auth();
   if (!session?.user) return;
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { status: true } });
+  if (!dbUser || dbUser.status !== "ACTIVE") return;
+
   const comment = await prisma.comment.findUnique({ where: { id: commentId } });
-  if (!comment || comment.authorId !== session.user.id) return;
+  if (!comment || (comment.authorId !== session.user.id && session.user.role !== "ADMIN")) return;
 
   await prisma.comment.update({
     where: { id: commentId },

@@ -9,6 +9,8 @@ type TypeWithProducts = { id: string; name: string; products: ProductOption[] };
 
 export function CompareForm({ types }: { types: TypeWithProducts[] }) {
   const [selectedTypeId, setSelectedTypeId] = useState("");
+  const [productAId, setProductAId] = useState("");
+  const [productBId, setProductBId] = useState("");
   const selectedType = types.find((t) => t.id === selectedTypeId);
   const products = selectedType?.products ?? [];
   const [state, action, pending] = useActionState<AdminFormState, FormData>(createComparison, undefined);
@@ -17,24 +19,24 @@ export function CompareForm({ types }: { types: TypeWithProducts[] }) {
     <form action={action} className="bg-white rounded-xl border border-[#d4d4d4] p-6 space-y-4">
       <div>
         <label className="block text-xs font-medium text-muted mb-1">종류 선택</label>
-        <select value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.target.value)} className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
+        <select value={selectedTypeId} onChange={(e) => { setSelectedTypeId(e.target.value); setProductAId(""); setProductBId(""); }} className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
           <option value="">선택하세요</option>
           {types.map((t) => (<option key={t.id} value={t.id}>{t.name}</option>))}
         </select>
       </div>
       <div>
         <label className="block text-xs font-medium text-muted mb-1">상품 A</label>
-        <select name="productAId" required className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
+        <select name="productAId" required value={productAId} onChange={(e) => setProductAId(e.target.value)} className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
           <option value="">선택하세요</option>
-          {products.map((p) => (<option key={p.id} value={p.id}>{p.brand.name} {p.name}</option>))}
+          {products.filter((p) => p.id !== productBId).map((p) => (<option key={p.id} value={p.id}>{p.brand.name} {p.name}</option>))}
         </select>
         {state?.errors?.productAId && <p className="text-xs text-error mt-1">{state.errors.productAId[0]}</p>}
       </div>
       <div>
         <label className="block text-xs font-medium text-muted mb-1">상품 B</label>
-        <select name="productBId" required className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
+        <select name="productBId" required value={productBId} onChange={(e) => setProductBId(e.target.value)} className="h-10 w-full px-3 border border-[#d4d4d4] rounded-lg text-sm focus:outline-none focus:border-primary">
           <option value="">선택하세요</option>
-          {products.map((p) => (<option key={p.id} value={p.id}>{p.brand.name} {p.name}</option>))}
+          {products.filter((p) => p.id !== productAId).map((p) => (<option key={p.id} value={p.id}>{p.brand.name} {p.name}</option>))}
         </select>
         {state?.errors?.productBId && <p className="text-xs text-error mt-1">{state.errors.productBId[0]}</p>}
       </div>
