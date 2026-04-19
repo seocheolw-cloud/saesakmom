@@ -28,7 +28,15 @@ export const ProductSchema = z.object({
   name: z.string().min(1, "상품명을 입력하세요").max(100),
   description: z.string().max(5000).optional(),
   price: z.coerce.number().int().min(0).optional(),
-  imageUrl: z.string().url("올바른 URL을 입력하세요").optional().or(z.literal("")),
+  imageUrl: z
+    .string()
+    .max(500)
+    .refine(
+      (v) => v === "" || v.startsWith("/") || /^https?:\/\//.test(v),
+      "올바른 이미지 경로를 입력하세요"
+    )
+    .optional()
+    .or(z.literal("")),
   typeId: z.string().min(1, "종류를 선택하세요"),
   brandId: z.string().min(1, "브랜드를 선택하세요"),
 });

@@ -23,7 +23,12 @@
       "Bash(taskkill //f //im node.exe)",
       "Bash(rm -rf C:/Projects/saesakmom/.next)",
       "Bash(grep -o \"Unknown argument[^\\\\\\\\\\\\\\\\]*\")",
-      "Bash(grep -o \"PrismaClient[^\\\\\\\\\\\\\\\\]*\")"
+      "Bash(grep -o \"PrismaClient[^\\\\\\\\\\\\\\\\]*\")",
+      "WebFetch(domain:cybex-online.com)",
+      "WebSearch",
+      "WebFetch(domain:www.cybex-korea.co.kr)",
+      "WebFetch(domain:nosearch.com)",
+      "WebFetch(domain:www.cybex-online.com)"
     ]
   }
 }

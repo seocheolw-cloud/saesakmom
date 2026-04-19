@@ -22,7 +22,7 @@ const categories = [
   { name: "자유게시판", slug: "free", sortOrder: 8 },
 ];
 
-const adminUser = { email: "admin@saesakmom.com", nickname: "admin", password: "7856pass!!" };
+const adminUser = { email: "admin@naver.com", nickname: "admin", password: "7856pass!!" };
 
 const dummyUsers = [
   { email: "sunny@example.com", nickname: "햇살맘", password: "test1234" },
@@ -241,11 +241,16 @@ async function main() {
   }
   console.log("Categories seeded");
 
-  // 관리자 유저 시드
+  // 관리자 유저 시드 (nickname 기준으로 조회 — 이메일 변경 대응)
   const adminHashedPassword = await bcrypt.hash(adminUser.password, 10);
   await prisma.user.upsert({
-    where: { email: adminUser.email },
-    update: { role: "ADMIN", nickname: adminUser.nickname, password: adminHashedPassword },
+    where: { nickname: adminUser.nickname },
+    update: {
+      email: adminUser.email,
+      role: "ADMIN",
+      status: "ACTIVE",
+      password: adminHashedPassword,
+    },
     create: {
       email: adminUser.email,
       nickname: adminUser.nickname,
