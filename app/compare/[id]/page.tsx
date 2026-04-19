@@ -7,6 +7,7 @@ import { ProductImage } from "@/app/products/ProductImage";
 import { VoteButton } from "./VoteButton";
 import { CompareComments } from "./CompareComments";
 import { BackButton as CompareBackButton } from "./BackButton";
+import { AIReviewSection } from "./AIReviewSection";
 
 export default async function CompareDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -148,6 +149,9 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
             <p className="text-xs text-muted text-center mb-3">총 {total}표 참여</p>
             <VoteButton comparisonId={comparison.id} userChoice={userVote?.choice ?? null} productAName={productA.name} productBName={productB.name} isLoggedIn={!!session?.user} />
           </div>
+
+          {/* AI 리뷰 — 스펙 비교 위 */}
+          <AIReviewSection markdown={comparison.aiReview} />
 
           {/* 스펙 비교 */}
           {specRows.length > 0 && (

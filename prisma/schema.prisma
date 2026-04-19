@@ -314,13 +314,15 @@ model ProductComment {
 }
 
 model ProductComparison {
-  id         String   @id @default(cuid())
-  productAId String
-  productBId String
-  creatorId  String
-  voteACount Int      @default(0)
-  voteBCount Int      @default(0)
-  createdAt  DateTime @default(now())
+  id           String    @id @default(cuid())
+  productAId   String
+  productBId   String
+  creatorId    String
+  voteACount   Int       @default(0)
+  voteBCount   Int       @default(0)
+  aiReview     String?   @db.Text
+  aiReviewAt   DateTime?
+  createdAt    DateTime  @default(now())
 
   productA Product @relation("ComparisonProductA", fields: [productAId], references: [id], onDelete: Cascade)
   productB Product @relation("ComparisonProductB", fields: [productBId], references: [id], onDelete: Cascade)

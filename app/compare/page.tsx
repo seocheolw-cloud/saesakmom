@@ -96,20 +96,14 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
 
               return (
                 <Link key={c.id} href={`/compare/${c.id}`} className="group block bg-white rounded-2xl border border-[#d4d4d4] overflow-hidden hover:shadow-md hover:border-primary/40 transition-all">
-                  <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-primary bg-blue-50 px-2 py-0.5 rounded">{c.productA.type.name}</span>
-                      {c.isPopular && (
-                        <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded">인기</span>
-                      )}
-                      {c.isNew && (
-                        <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded">N</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-muted">
-                      <span>{c.total}표</span>
-                      {c.commentCount > 0 && <span>댓글 {c.commentCount}</span>}
-                    </div>
+                  <div className="px-5 pt-4 pb-2 flex items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-primary bg-blue-50 px-2 py-0.5 rounded">{c.productA.type.name}</span>
+                    {c.isPopular && (
+                      <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded">인기</span>
+                    )}
+                    {c.isNew && (
+                      <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded">N</span>
+                    )}
                   </div>
 
                   {/* 상품 비교 카드 */}
@@ -142,18 +136,32 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
                     {/* 투표 바 */}
                     <div className="mt-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-xs font-bold ${winner === "A" ? "text-blue-600" : "text-blue-400"}`}>{pctA}%</span>
-                          {winner === "A" && <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
+                        <div className="flex items-center gap-1 shrink-0 w-12 justify-end">
+                          <span className={`text-sm font-bold ${winner === "A" ? "text-blue-600" : "text-blue-400"}`}>{pctA}%</span>
+                          {winner === "A" && <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
                         </div>
-                        <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden flex">
-                          <div className={`h-full rounded-l-full transition-all ${winner === "A" ? "bg-blue-500" : "bg-blue-300"}`} style={{ width: `${pctA}%` }} />
-                          <div className={`h-full rounded-r-full transition-all ${winner === "B" ? "bg-red-500" : "bg-red-300"}`} style={{ width: `${pctB}%` }} />
+                        <div className="flex-1 h-7 bg-gray-100 rounded-full overflow-hidden flex relative">
+                          <div className={`h-full transition-all flex items-center pl-2 ${winner === "A" ? "bg-blue-500" : "bg-blue-300"}`} style={{ width: `${pctA}%` }}>
+                            {c.voteACount > 0 && pctA >= 18 && <span className="text-[13px] font-bold text-white">{c.voteACount}표</span>}
+                          </div>
+                          <div className={`h-full transition-all flex items-center justify-end pr-2 ${winner === "B" ? "bg-red-500" : "bg-red-300"}`} style={{ width: `${pctB}%` }}>
+                            {c.voteBCount > 0 && pctB >= 18 && <span className="text-[13px] font-bold text-white">{c.voteBCount}표</span>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          {winner === "B" && <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
-                          <span className={`text-xs font-bold ${winner === "B" ? "text-red-600" : "text-red-400"}`}>{pctB}%</span>
+                        <div className="flex items-center gap-1 shrink-0 w-12">
+                          {winner === "B" && <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
+                          <span className={`text-sm font-bold ${winner === "B" ? "text-red-600" : "text-red-400"}`}>{pctB}%</span>
                         </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-4 mt-3">
+                        <span className="text-[13px] font-semibold text-foreground flex items-center gap-1">
+                          <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          {c.total}표
+                        </span>
+                        <span className="text-[13px] font-semibold text-foreground flex items-center gap-1">
+                          <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                          댓글 {c.commentCount}
+                        </span>
                       </div>
                     </div>
                   </div>

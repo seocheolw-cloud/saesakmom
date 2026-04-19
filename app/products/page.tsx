@@ -61,7 +61,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     prisma.productType.findMany({
       orderBy: { sortOrder: "asc" },
       include: {
-        brands: { orderBy: { name: "asc" } },
+        brands: {
+          orderBy: { name: "asc" },
+          include: { _count: { select: { products: true } } },
+        },
         _count: { select: { products: true } },
       },
     }),
@@ -77,7 +80,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const filterTypes = types.map((t) => ({ slug: t.slug, name: t.name, brands: t.brands.map((b) => ({ id: b.id, name: b.name })) }));
+  const filterTypes = types.map((t) => ({ slug: t.slug, name: t.name, brands: t.brands.map((b) => ({ id: b.id, name: b.name, count: b._count.products })) }));
 
   function buildHref(overrides: Record<string, string | undefined>) {
     const p: Record<string, string> = {};
@@ -208,14 +211,17 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                           <Link
                             key={b.id}
                             href={brandFilter === b.name ? buildHref({ brand: undefined, page: undefined }) : buildHref({ brand: b.name, page: undefined })}
-                            className={`flex items-center px-4 pl-8 py-2 text-[13px] transition-colors ${
+                            className={`flex items-center justify-between px-4 pl-8 py-2 text-[13px] transition-colors ${
                               brandFilter === b.name ? "text-primary font-semibold bg-blue-50/50" : "text-muted hover:text-foreground hover:bg-white/50"
                             }`}
                           >
-                            {brandFilter === b.name && (
-                              <svg className="w-3 h-3 mr-1.5 text-primary" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                            )}
-                            {b.name}
+                            <span className="flex items-center min-w-0">
+                              {brandFilter === b.name && (
+                                <svg className="w-3 h-3 mr-1.5 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                              )}
+                              <span className="truncate">{b.name}</span>
+                            </span>
+                            <span className={`text-[11px] shrink-0 ml-2 ${brandFilter === b.name ? "text-primary/70" : "text-muted/70"}`}>({b._count.products})</span>
                           </Link>
                         ))}
                       </div>
@@ -243,11 +249,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                     <Link
                       key={b.id}
                       href={brandFilter === b.name ? buildHref({ brand: undefined, page: undefined }) : buildHref({ brand: b.name, page: undefined })}
-                      className={`h-7 px-3 rounded-full text-[12px] font-medium inline-flex items-center transition-all ${
+                      className={`h-7 px-3 rounded-full text-[12px] font-medium inline-flex items-center gap-1 transition-all ${
                         brandFilter === b.name ? "bg-primary text-white" : "bg-gray-100 text-[#5F6B7C] hover:bg-gray-200"
                       }`}
                     >
                       {b.name}
+                      <span className={`text-[11px] ${brandFilter === b.name ? "text-white/70" : "text-[#5F6B7C]/60"}`}>({b._count.products})</span>
                     </Link>
                   ))}
                 </div>

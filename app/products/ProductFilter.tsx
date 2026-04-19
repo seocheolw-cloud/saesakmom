@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-type TypeOption = { slug: string; name: string; brands: { id: string; name: string }[] };
+type TypeOption = { slug: string; name: string; brands: { id: string; name: string; count: number }[] };
 
 export function ProductFilter({ types }: { types: TypeOption[] }) {
   const router = useRouter();
@@ -144,11 +144,12 @@ export function ProductFilter({ types }: { types: TypeOption[] }) {
                         key={b.id}
                         type="button"
                         onClick={() => setBrand(brand === b.name ? "" : b.name)}
-                        className={`h-7 px-3 rounded-full text-[12px] font-medium transition-all ${
+                        className={`h-7 px-3 rounded-full text-[12px] font-medium inline-flex items-center gap-1 transition-all ${
                           brand === b.name ? "bg-primary text-white" : "bg-gray-100 text-[#5F6B7C] hover:bg-gray-200"
                         }`}
                       >
                         {b.name}
+                        <span className={`text-[11px] ${brand === b.name ? "text-white/70" : "text-[#5F6B7C]/60"}`}>({b.count})</span>
                       </button>
                     ))}
                   </div>

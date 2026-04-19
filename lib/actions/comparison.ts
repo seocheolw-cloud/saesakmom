@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generateComparisonReview } from "@/lib/ai/comparison-review";
 import {
   ComparisonSchema,
   ComparisonCommentSchema,
@@ -63,8 +64,34 @@ export async function createComparison(
     data: { productAId: aId, productBId: bId, creatorId: session.user.id },
   });
 
+  // AI 리뷰 백그라운드 생성 (15~30초 소요 가능). 실패해도 redirect는 그대로 진행.
+  generateComparisonReview(comparison.id).catch((e) => {
+    console.error("[AI review] generation failed:", e);
+  });
+
   revalidatePath("/compare");
   redirect(`/compare/${comparison.id}`);
+}
+
+/**
+ * 관리자·작성자용: 기존 비교에 대해 AI 리뷰를 수동 재생성.
+ */
+export async function regenerateComparisonReview(
+  comparisonId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "로그인이 필요합니다." };
+  const comparison = await prisma.productComparison.findUnique({
+    where: { id: comparisonId },
+    select: { creatorId: true },
+  });
+  if (!comparison) return { ok: false, error: "비교를 찾을 수 없습니다." };
+  if (comparison.creatorId !== session.user.id && session.user.role !== "ADMIN") {
+    return { ok: false, error: "권한이 없습니다." };
+  }
+  const result = await generateComparisonReview(comparisonId, { force: true });
+  if (result.ok) revalidatePath(`/compare/${comparisonId}`);
+  return result;
 }
 
 export async function castVote(

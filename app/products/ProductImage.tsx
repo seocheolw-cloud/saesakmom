@@ -22,7 +22,7 @@ export function ProductImage({ imageUrl, typeName, productName, size = "md" }: {
 
   if (imageUrl) {
     return (
-      <div className={`w-full ${heights[size]} bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden`}>
+      <div className={`w-full ${heights[size]} bg-white rounded-lg flex items-center justify-center overflow-hidden`}>
         <img src={imageUrl} alt={productName} className="max-h-full max-w-full object-contain" />
       </div>
     );
